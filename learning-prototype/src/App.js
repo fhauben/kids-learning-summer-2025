@@ -2,6 +2,29 @@ import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+// Collapsible Instruction Component
+function CollapsibleInstruction({ title, children }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="mb-2 border border-gray-700 rounded">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left px-4 py-2 bg-gray-700 hover:bg-gray-600 flex items-center justify-between"
+      >
+        <span>{title}</span>
+        {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+      </button>
+      {isOpen && (
+        <div className="px-4 py-2 bg-gray-800 text-sm text-gray-300 border-t border-gray-700">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function App() {
   const [code, setCode] = useState("// Start typing JavaScript here...");
@@ -72,13 +95,16 @@ export default function App() {
         {/* Instructions Panel */}
         <div className="h-1/2 p-4 overflow-auto">
           <h2 className="text-xl font-bold mb-2">Instructions</h2>
-          <div className="border border-gray-600 rounded p-4 text-gray-300 bg-gray-800">
-            <p>This section will include step-by-step instructions or prompts for the user.</p>
-            <ul className="list-disc ml-5 mt-2">
-              <li>Instruction 1</li>
-              <li>Instruction 2</li>
-              <li>More to come…</li>
-            </ul>
+          <div className="text-gray-300">
+            <CollapsibleInstruction title="Instruction 1">
+              Write a function that returns the square of a number.
+            </CollapsibleInstruction>
+            <CollapsibleInstruction title="Instruction 2">
+              Convert the function to an arrow function and test with different inputs.
+            </CollapsibleInstruction>
+            <CollapsibleInstruction title="More to come…">
+              We'll keep adding challenges and prompts in this format.
+            </CollapsibleInstruction>
           </div>
         </div>
       </div>
