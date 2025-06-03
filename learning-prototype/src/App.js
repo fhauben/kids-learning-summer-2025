@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 
 export default function App() {
-  const [code, setCode] = useState("// Start typing JavaScript here...");
+  const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [chatLog, setChatLog] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [modalStep, setModalStep] = useState(0);
+  const [showModal, setShowModal] = useState(true);
+  const [modalStep, setModalStep] = useState(1);
   const [persona, setPersona] = useState("");
   const [technology, setTechnology] = useState("");
 
@@ -17,7 +17,6 @@ export default function App() {
     const newChatLog = [...chatLog, userMessage];
     setChatLog(newChatLog);
     setInput("");
-    setLoading(true);
 
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -27,82 +26,68 @@ export default function App() {
     const data = await response.json();
 
     setChatLog([...newChatLog, { role: "assistant", content: data.reply }]);
-    setLoading(false);
   };
 
-  const renderModal = () => {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-        <div className="bg-gray-800 text-white p-6 rounded-xl shadow-xl w-96 animate-fade-in">
-          {modalStep === 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4">What is your persona?</h2>
-              <div className="flex flex-col gap-2">
-                {[
-                  "Full Stack Developer",
-                  "Back end Developer",
-                  "Front End Developer",
-                  "Never Written Code Before",
-                ].map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => {
-                      setPersona(option);
-                      setModalStep(1);
-                    }}
-                    className="bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-2"
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+  /*
+  useEffect(() => {
+    fetch("/starterCode.json")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.python) {
+          setCode(data.python);
+        }
+      })
+      .catch((err) => console.error("Failed to load starter code:", err));
+  }, []);
+*/
 
+useEffect(() => {
+  if (!showModal && persona && technology) {
+    fetch("/starterCode.json")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.python) {
+          setCode(data.python);
+        }
+      })
+      .catch((err) => console.error("Failed to load starter code:", err));
+  }
+}, [showModal, persona, technology]);
+
+  const renderModal = () => {
+    if (!showModal) return null;
+
+    const nextStep = () => setModalStep(modalStep + 1);
+    const prevStep = () => setModalStep(modalStep - 1);
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 text-white p-6 rounded-xl w-96 shadow-xl transition-opacity duration-300">
           {modalStep === 1 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">Select the technology you'd like to learn</h2>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => {
-                    setTechnology("Python");
-                    setModalStep(2);
-                  }}
-                  className="bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-2"
-                >
-                  Python
+              <h2 className="text-xl font-bold mb-4">What is your persona?</h2>
+              {["Full Stack Developer", "Back end Developer", "Front End Developer", "Never Written Code Before"].map(p => (
+                <button key={p} onClick={() => { setPersona(p); nextStep(); }} className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2">
+                  {p}
                 </button>
-                <button
-                  onClick={() => setModalStep(0)}
-                  className="text-sm text-blue-300 hover:underline mt-2"
-                >
-                  ← Back
-                </button>
-              </div>
+              ))}
             </div>
           )}
-
           {modalStep === 2 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">Confirm your selections</h2>
-              <p className="mb-4">
-                Persona: <strong>{persona}</strong>
-                <br />Technology: <strong>{technology}</strong>
-              </p>
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setModalStep(1)}
-                  className="text-sm text-blue-300 hover:underline"
-                >
-                  ← Back
-                </button>
-                <button
-                  onClick={() => setModalStep(-1)}
-                  className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg"
-                >
-                  Confirm
-                </button>
-              </div>
+              <h2 className="text-xl font-bold mb-4">Select the technology you'd like to learn</h2>
+              <button onClick={() => { setTechnology("Python"); nextStep(); }} className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2">
+                Python
+              </button>
+              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">Back</button>
+            </div>
+          )}
+          {modalStep === 3 && (
+            <div>
+              <h2 className="text-xl font-bold mb-4">Confirm Your Selection</h2>
+              <p className="mb-4">Persona: <strong>{persona}</strong><br />Technology: <strong>{technology}</strong></p>
+              <button onClick={() => setShowModal(false)} className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded-lg">Confirm</button>
+              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">Back</button>
             </div>
           )}
         </div>
@@ -111,8 +96,8 @@ export default function App() {
   };
 
   return (
-    <div className="dark bg-gray-900 text-gray-100 flex h-screen relative">
-      {modalStep >= 0 && renderModal()}
+    <div className="dark bg-gray-900 text-gray-100 flex h-screen">
+      {renderModal()}
 
       {/* Left: Code Editor */}
       <div className="w-1/2 p-4 border-r border-gray-700 flex flex-col">
@@ -121,7 +106,7 @@ export default function App() {
           <CodeMirror
             value={code}
             height="100%"
-            extensions={[javascript()]}
+            extensions={[python()]}
             theme={oneDark}
             onChange={(value) => setCode(value)}
           />
@@ -139,7 +124,6 @@ export default function App() {
                 <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
               </div>
             ))}
-            {loading && <div className="italic text-gray-400">AI is typing<span className="animate-pulse">...</span></div>}
           </div>
           <div className="flex gap-2">
             <input
@@ -151,7 +135,6 @@ export default function App() {
             />
             <button
               onClick={handleSend}
-              disabled={loading || !input.trim()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
             >
               Send
@@ -163,12 +146,10 @@ export default function App() {
         <div className="h-1/2 p-4 overflow-auto">
           <h2 className="text-xl font-bold mb-2">Instructions</h2>
           <div className="space-y-2">
-            {["Instruction 1", "Instruction 2", "More to come…"].map((instruction, idx) => (
-              <details key={idx} className="bg-gray-800 border border-gray-600 rounded p-4">
-                <summary className="cursor-pointer font-semibold">{instruction}</summary>
-                <div className="mt-2 text-gray-300 text-sm">
-                  Detailed explanation for {instruction} goes here.
-                </div>
+            {["Instruction 1", "Instruction 2", "More to come…"].map((inst, index) => (
+              <details key={index} className="bg-gray-800 border border-gray-600 rounded p-4">
+                <summary className="cursor-pointer text-gray-200 font-medium">{inst}</summary>
+                <p className="text-gray-400 mt-2">Details about {inst.toLowerCase()}.</p>
               </details>
             ))}
           </div>
