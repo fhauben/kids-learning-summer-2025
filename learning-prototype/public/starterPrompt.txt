@@ -1,0 +1,11 @@
+I want you to create a 5 step programming language tutorial with test cases to run against each step based on the following things:
+
+1. What kind of profile the person learning has. They are either a front end, back end, full stack developer, or have no experience with programming whatsoever. The tutorial should be basic but the difficulty should still be based on their profile.
+
+2. The type of programming language they request: {{technology}}.
+
+Constraints:
+1. For now, the tutorial should be focused on single file development.
+
+Other details:  
+1. I want the introduction to the tutorials and each step to have a lot of detail and depth.

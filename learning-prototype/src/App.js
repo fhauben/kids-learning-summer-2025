@@ -11,8 +11,90 @@ export default function App() {
   const [modalStep, setModalStep] = useState(1);
   const [persona, setPersona] = useState("");
   const [technology, setTechnology] = useState("");
+  const [tutorialSteps, setTutorialSteps] = useState([]);
+  const [loadingTutorial, setLoadingTutorial] = useState(false);
+
+  // Utility to parse tutorial steps from the response text
+  const parseTutorialSteps = (text) => {
+    // Split by lines that look like numbered steps (e.g., "1.", "2.")
+    // This is a simple heuristic, can be improved if needed
+    const stepRegex = /^\s*\d+\.\s+/gm;
+    const splits = text.split(stepRegex).filter((s) => s.trim() !== "");
+    // Optionally prepend "Step X:" for display
+    return splits.map((stepText, idx) => `Step ${idx + 1}: ${stepText.trim()}`);
+  };
+
+  // Fetch starter code once modal closes and tech selected
+  useEffect(() => {
+    if (!showModal && technology) {
+      fetch("/starterCode.json")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.python) {
+            setCode(data.python);
+          }
+        })
+        .catch((err) => console.error("Failed to load starter code:", err));
+
+      fetchTutorial();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModal, technology]);
+
+  const fetchTutorial = async () => {
+    setLoadingTutorial(true);
+
+    try {
+      // Fetch the prompt template from public folder
+      const promptResponse = await fetch("/starterPrompt.txt");
+      if (!promptResponse.ok) {
+        throw new Error("Failed to load prompt template");
+      }
+      let promptTemplate = await promptResponse.text();
+
+      // Replace placeholder {{technology}} with the selected technology
+      promptTemplate = promptTemplate.replace("{{technology}}", technology);
+
+      // Add persona info to prompt if desired
+      promptTemplate += `\n\nProfile: ${persona}\nLanguage: ${technology}`;
+
+      // Send prompt to backend
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant creating programming tutorials.",
+            },
+            { role: "user", content: promptTemplate },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const tutorialText = data.reply || data.content || "";
+
+      const steps = parseTutorialSteps(tutorialText);
+      setTutorialSteps(steps);
+    } catch (error) {
+      console.error("Failed to fetch tutorial:", error);
+      setTutorialSteps([
+        "Failed to load tutorial steps. Please try again later.",
+      ]);
+    } finally {
+      setLoadingTutorial(false);
+    }
+  };
 
   const handleSend = async () => {
+    if (!input.trim()) return;
+
     const userMessage = { role: "user", content: input };
     const newChatLog = [...chatLog, userMessage];
     setChatLog(newChatLog);
@@ -28,32 +110,6 @@ export default function App() {
     setChatLog([...newChatLog, { role: "assistant", content: data.reply }]);
   };
 
-  /*
-  useEffect(() => {
-    fetch("/starterCode.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.python) {
-          setCode(data.python);
-        }
-      })
-      .catch((err) => console.error("Failed to load starter code:", err));
-  }, []);
-*/
-
-useEffect(() => {
-  if (!showModal && persona && technology) {
-    fetch("/starterCode.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.python) {
-          setCode(data.python);
-        }
-      })
-      .catch((err) => console.error("Failed to load starter code:", err));
-  }
-}, [showModal, persona, technology]);
-
   const renderModal = () => {
     if (!showModal) return null;
 
@@ -66,8 +122,20 @@ useEffect(() => {
           {modalStep === 1 && (
             <div>
               <h2 className="text-xl font-bold mb-4">What is your persona?</h2>
-              {["Full Stack Developer", "Back end Developer", "Front End Developer", "Never Written Code Before"].map(p => (
-                <button key={p} onClick={() => { setPersona(p); nextStep(); }} className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2">
+              {[
+                "Full Stack Developer",
+                "Back end Developer",
+                "Front End Developer",
+                "Never Written Code Before",
+              ].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => {
+                    setPersona(p);
+                    nextStep();
+                  }}
+                  className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2"
+                >
                   {p}
                 </button>
               ))}
@@ -75,19 +143,46 @@ useEffect(() => {
           )}
           {modalStep === 2 && (
             <div>
-              <h2 className="text-xl font-bold mb-4">Select the technology you'd like to learn</h2>
-              <button onClick={() => { setTechnology("Python"); nextStep(); }} className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2">
+              <h2 className="text-xl font-bold mb-4">
+                Select the technology you'd like to learn
+              </h2>
+              <button
+                onClick={() => {
+                  setTechnology("Python");
+                  nextStep();
+                }}
+                className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2"
+              >
                 Python
               </button>
-              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">Back</button>
+              <button
+                onClick={prevStep}
+                className="text-sm text-gray-400 hover:text-gray-200 mt-2"
+              >
+                Back
+              </button>
             </div>
           )}
           {modalStep === 3 && (
             <div>
               <h2 className="text-xl font-bold mb-4">Confirm Your Selection</h2>
-              <p className="mb-4">Persona: <strong>{persona}</strong><br />Technology: <strong>{technology}</strong></p>
-              <button onClick={() => setShowModal(false)} className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded-lg">Confirm</button>
-              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">Back</button>
+              <p className="mb-4">
+                Persona: <strong>{persona}</strong>
+                <br />
+                Technology: <strong>{technology}</strong>
+              </p>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded-lg"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={prevStep}
+                className="text-sm text-gray-400 hover:text-gray-200 mt-2"
+              >
+                Back
+              </button>
             </div>
           )}
         </div>
@@ -121,7 +216,8 @@ useEffect(() => {
           <div className="flex-1 overflow-y-auto border border-gray-600 p-2 mb-2 rounded bg-gray-800">
             {chatLog.map((msg, idx) => (
               <div key={idx} className="mb-2">
-                <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
+                <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+                {msg.content}
               </div>
             ))}
           </div>
@@ -134,7 +230,7 @@ useEffect(() => {
               placeholder="Ask something..."
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
             >
               Send
@@ -146,12 +242,26 @@ useEffect(() => {
         <div className="h-1/2 p-4 overflow-auto">
           <h2 className="text-xl font-bold mb-2">Instructions</h2>
           <div className="space-y-2">
-            {["Instruction 1", "Instruction 2", "More to come…"].map((inst, index) => (
-              <details key={index} className="bg-gray-800 border border-gray-600 rounded p-4">
-                <summary className="cursor-pointer text-gray-200 font-medium">{inst}</summary>
-                <p className="text-gray-400 mt-2">Details about {inst.toLowerCase()}.</p>
-              </details>
-            ))}
+            {loadingTutorial && (
+              <p className="text-gray-400 italic">Loading tutorial steps...</p>
+            )}
+            {!loadingTutorial && tutorialSteps.length === 0 && (
+              <p className="text-gray-400 italic">
+                Tutorial steps will appear here after selection.
+              </p>
+            )}
+            {!loadingTutorial &&
+              tutorialSteps.map((step, index) => (
+                <details
+                  key={index}
+                  className="bg-gray-800 border border-gray-600 rounded p-4"
+                >
+                  <summary className="cursor-pointer text-gray-200 font-medium">
+                    {`Step ${index + 1}`}
+                  </summary>
+                  <p className="text-gray-400 mt-2">{step}</p>
+                </details>
+              ))}
           </div>
         </div>
       </div>
