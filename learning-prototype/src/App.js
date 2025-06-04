@@ -3,66 +3,44 @@ import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 
+// Utility to split instruction text into text and code segments
+function parseMarkdownCodeBlocks(text) {
+  const regex = /```(?:python)?\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+  const segments = [];
+
+  while ((match = regex.exec(text)) !== null) {
+    // Text before code block
+    if (match.index > lastIndex) {
+      segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
+    }
+    // Code block content
+    segments.push({ type: "code", content: match[1] });
+    lastIndex = regex.lastIndex;
+  }
+  // Text after last code block
+  if (lastIndex < text.length) {
+    segments.push({ type: "text", content: text.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
 export default function App() {
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [chatLog, setChatLog] = useState([]);
-  const [instructions, setInstructions] = useState([]);
   const [showModal, setShowModal] = useState(true);
   const [modalStep, setModalStep] = useState(1);
   const [persona, setPersona] = useState("");
   const [technology, setTechnology] = useState("");
+  const [instructions, setInstructions] = useState([]);
 
-  const handleSend = async (initialMessage = null) => {
-    const userMessage = initialMessage
-      ? { role: "user", content: initialMessage }
-      : { role: "user", content: input };
-
-    // Only add user message to chatLog if NOT initial prompt
-    if (!initialMessage) {
-      setChatLog((prev) => [...prev, userMessage]);
-    }
-
-    // Prepare messages to send to backend
-    const messagesToSend = initialMessage ? [userMessage] : [...chatLog, userMessage];
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ messages: messagesToSend }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await response.json();
-
-    // Only add assistant response if NOT initial prompt
-    if (!initialMessage) {
-      setChatLog((prev) => [...prev, { role: "assistant", content: data.reply }]);
-    } else {
-      // For initial prompt, parse steps and update instructions invisibly
-      if (data.reply) {
-        const steps = [];
-        // Regex to match "Step N" and capture the text following it
-        const regex = /Step\s*\d+[\s\S]*?(?=Step\s*\d+|$)/g;
-        const matches = data.reply.match(regex);
-
-        if (matches) {
-          matches.forEach((stepText) => {
-            steps.push(stepText.trim());
-          });
-        } else {
-          // fallback if no "Step N" headers, put entire reply as one step
-          steps.push(data.reply.trim());
-        }
-
-        setInstructions(steps);
-      }
-    }
-
-    if (!initialMessage) setInput("");
-  };
-
+  // Load initial prompt from file and send to backend
   useEffect(() => {
     if (!showModal) {
-      // Load starter code after modal closes
+      // Load starter code
       fetch("/starterCode.json")
         .then((res) => res.json())
         .then((data) => {
@@ -72,21 +50,53 @@ export default function App() {
         })
         .catch((err) => console.error("Failed to load starter code:", err));
 
-      // Load initial prompt from static file
+      // Load initial prompt text
       fetch("/starterPrompt.txt")
         .then((res) => res.text())
-        .then((promptTemplate) => {
-          const prompt = `${promptTemplate}
+        .then((promptText) => {
+          const promptWithVars = `${promptText}\n\nProfile: ${persona}\nLanguage: ${technology}`;
 
-Profile: ${persona}
-Language: ${technology}`;
-
-          handleSend(prompt);
+          handleSend(promptWithVars, true);
         })
         .catch((err) => console.error("Failed to load starter prompt:", err));
     }
   }, [showModal]);
 
+  // Send message to backend
+  const handleSend = async (message, isInitial = false) => {
+    const userMessage = { role: "user", content: message };
+    const newChatLog = [...chatLog, userMessage];
+    setChatLog(newChatLog);
+    if (!isInitial) setInput("");
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages: newChatLog }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await response.json();
+
+    const assistantMessage = { role: "assistant", content: data.reply };
+    setChatLog([...newChatLog, assistantMessage]);
+
+    if (isInitial) {
+      // Parse steps from initial prompt response and set instructions
+      const steps = [];
+      // Match "Step N" followed by content until next Step or end of string
+      const stepRegex = /Step\s*\d+([\s\S]*?)(?=Step\s*\d+|$)/gi;
+      let match;
+      while ((match = stepRegex.exec(data.reply)) !== null) {
+        steps.push(match[1].trim());
+      }
+      if (steps.length === 0) {
+        // fallback: if no steps detected, show full text as single instruction
+        steps.push(data.reply.trim());
+      }
+      setInstructions(steps);
+    }
+  };
+
+  // Modal UI for persona and tech selection
   const renderModal = () => {
     if (!showModal) return null;
 
@@ -153,6 +163,36 @@ Language: ${technology}`;
     );
   };
 
+  // Render each instruction step with syntax highlighting for code blocks
+  const renderInstructionStep = (stepText, index) => {
+    const segments = parseMarkdownCodeBlocks(stepText);
+    return (
+      <details key={index} className="bg-gray-800 border border-gray-600 rounded p-4">
+        <summary className="cursor-pointer text-gray-200 font-medium">{`Step ${index + 1}`}</summary>
+        <div className="mt-2 text-gray-400">
+          {segments.map((seg, i) =>
+            seg.type === "text" ? (
+              <p key={i} className="whitespace-pre-wrap">
+                {seg.content}
+              </p>
+            ) : (
+              <CodeMirror
+                key={i}
+                value={seg.content}
+                height="auto"
+                theme={oneDark}
+                extensions={[python()]}
+                readOnly={true}
+                basicSetup={{ lineNumbers: true, highlightActiveLine: false, highlightActiveLineGutter: false }}
+                style={{ marginTop: 8, marginBottom: 8, borderRadius: 4 }}
+              />
+            )
+          )}
+        </div>
+      </details>
+    );
+  };
+
   return (
     <div className="dark bg-gray-900 text-gray-100 flex h-screen">
       {renderModal()}
@@ -201,15 +241,11 @@ Language: ${technology}`;
         <div className="h-1/2 p-4 overflow-auto">
           <h2 className="text-xl font-bold mb-2">Instructions</h2>
           <div className="space-y-2">
-            {instructions.length === 0 && (
-              <p className="text-gray-400">Instructions will appear here after the tutorial loads.</p>
+            {instructions.length > 0 ? (
+              instructions.map((step, idx) => renderInstructionStep(step, idx))
+            ) : (
+              <p className="text-gray-400">Loading instructions...</p>
             )}
-            {instructions.map((inst, index) => (
-              <details key={index} className="bg-gray-800 border border-gray-600 rounded p-4">
-                <summary className="cursor-pointer text-gray-200 font-medium">Step {index + 1}</summary>
-                <p className="text-gray-400 mt-2 whitespace-pre-wrap">{inst}</p>
-              </details>
-            ))}
           </div>
         </div>
       </div>
