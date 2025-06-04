@@ -7,26 +7,62 @@ export default function App() {
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [chatLog, setChatLog] = useState([]);
+  const [instructions, setInstructions] = useState([]);
   const [showModal, setShowModal] = useState(true);
   const [modalStep, setModalStep] = useState(1);
   const [persona, setPersona] = useState("");
   const [technology, setTechnology] = useState("");
-  const [tutorialSteps, setTutorialSteps] = useState([]);
-  const [loadingTutorial, setLoadingTutorial] = useState(false);
 
-  // Utility to parse tutorial steps from the response text
-  const parseTutorialSteps = (text) => {
-    // Split by lines that look like numbered steps (e.g., "1.", "2.")
-    // This is a simple heuristic, can be improved if needed
-    const stepRegex = /^\s*\d+\.\s+/gm;
-    const splits = text.split(stepRegex).filter((s) => s.trim() !== "");
-    // Optionally prepend "Step X:" for display
-    return splits.map((stepText, idx) => `Step ${idx + 1}: ${stepText.trim()}`);
+  const handleSend = async (initialMessage = null) => {
+    const userMessage = initialMessage
+      ? { role: "user", content: initialMessage }
+      : { role: "user", content: input };
+
+    // Only add user message to chatLog if NOT initial prompt
+    if (!initialMessage) {
+      setChatLog((prev) => [...prev, userMessage]);
+    }
+
+    // Prepare messages to send to backend
+    const messagesToSend = initialMessage ? [userMessage] : [...chatLog, userMessage];
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages: messagesToSend }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await response.json();
+
+    // Only add assistant response if NOT initial prompt
+    if (!initialMessage) {
+      setChatLog((prev) => [...prev, { role: "assistant", content: data.reply }]);
+    } else {
+      // For initial prompt, parse steps and update instructions invisibly
+      if (data.reply) {
+        const steps = [];
+        // Regex to match "Step N" and capture the text following it
+        const regex = /Step\s*\d+[\s\S]*?(?=Step\s*\d+|$)/g;
+        const matches = data.reply.match(regex);
+
+        if (matches) {
+          matches.forEach((stepText) => {
+            steps.push(stepText.trim());
+          });
+        } else {
+          // fallback if no "Step N" headers, put entire reply as one step
+          steps.push(data.reply.trim());
+        }
+
+        setInstructions(steps);
+      }
+    }
+
+    if (!initialMessage) setInput("");
   };
 
-  // Fetch starter code once modal closes and tech selected
   useEffect(() => {
-    if (!showModal && technology) {
+    if (!showModal) {
+      // Load starter code after modal closes
       fetch("/starterCode.json")
         .then((res) => res.json())
         .then((data) => {
@@ -36,79 +72,20 @@ export default function App() {
         })
         .catch((err) => console.error("Failed to load starter code:", err));
 
-      fetchTutorial();
+      // Load initial prompt from static file
+      fetch("/starterPrompt.txt")
+        .then((res) => res.text())
+        .then((promptTemplate) => {
+          const prompt = `${promptTemplate}
+
+Profile: ${persona}
+Language: ${technology}`;
+
+          handleSend(prompt);
+        })
+        .catch((err) => console.error("Failed to load starter prompt:", err));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showModal, technology]);
-
-  const fetchTutorial = async () => {
-    setLoadingTutorial(true);
-
-    try {
-      // Fetch the prompt template from public folder
-      const promptResponse = await fetch("/starterPrompt.txt");
-      if (!promptResponse.ok) {
-        throw new Error("Failed to load prompt template");
-      }
-      let promptTemplate = await promptResponse.text();
-
-      // Replace placeholder {{technology}} with the selected technology
-      promptTemplate = promptTemplate.replace("{{technology}}", technology);
-
-      // Add persona info to prompt if desired
-      promptTemplate += `\n\nProfile: ${persona}\nLanguage: ${technology}`;
-
-      // Send prompt to backend
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: "system",
-              content: "You are a helpful assistant creating programming tutorials.",
-            },
-            { role: "user", content: promptTemplate },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const tutorialText = data.reply || data.content || "";
-
-      const steps = parseTutorialSteps(tutorialText);
-      setTutorialSteps(steps);
-    } catch (error) {
-      console.error("Failed to fetch tutorial:", error);
-      setTutorialSteps([
-        "Failed to load tutorial steps. Please try again later.",
-      ]);
-    } finally {
-      setLoadingTutorial(false);
-    }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: "user", content: input };
-    const newChatLog = [...chatLog, userMessage];
-    setChatLog(newChatLog);
-    setInput("");
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ messages: newChatLog }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await response.json();
-
-    setChatLog([...newChatLog, { role: "assistant", content: data.reply }]);
-  };
+  }, [showModal]);
 
   const renderModal = () => {
     if (!showModal) return null;
@@ -122,30 +99,25 @@ export default function App() {
           {modalStep === 1 && (
             <div>
               <h2 className="text-xl font-bold mb-4">What is your persona?</h2>
-              {[
-                "Full Stack Developer",
-                "Back end Developer",
-                "Front End Developer",
-                "Never Written Code Before",
-              ].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => {
-                    setPersona(p);
-                    nextStep();
-                  }}
-                  className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2"
-                >
-                  {p}
-                </button>
-              ))}
+              {["Full Stack Developer", "Back end Developer", "Front End Developer", "Never Written Code Before"].map(
+                (p) => (
+                  <button
+                    key={p}
+                    onClick={() => {
+                      setPersona(p);
+                      nextStep();
+                    }}
+                    className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg mb-2"
+                  >
+                    {p}
+                  </button>
+                )
+              )}
             </div>
           )}
           {modalStep === 2 && (
             <div>
-              <h2 className="text-xl font-bold mb-4">
-                Select the technology you'd like to learn
-              </h2>
+              <h2 className="text-xl font-bold mb-4">Select the technology you'd like to learn</h2>
               <button
                 onClick={() => {
                   setTechnology("Python");
@@ -155,10 +127,7 @@ export default function App() {
               >
                 Python
               </button>
-              <button
-                onClick={prevStep}
-                className="text-sm text-gray-400 hover:text-gray-200 mt-2"
-              >
+              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">
                 Back
               </button>
             </div>
@@ -171,16 +140,10 @@ export default function App() {
                 <br />
                 Technology: <strong>{technology}</strong>
               </p>
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded-lg"
-              >
+              <button onClick={() => setShowModal(false)} className="w-full p-3 bg-blue-600 hover:bg-blue-700 rounded-lg">
                 Confirm
               </button>
-              <button
-                onClick={prevStep}
-                className="text-sm text-gray-400 hover:text-gray-200 mt-2"
-              >
+              <button onClick={prevStep} className="text-sm text-gray-400 hover:text-gray-200 mt-2">
                 Back
               </button>
             </div>
@@ -216,8 +179,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto border border-gray-600 p-2 mb-2 rounded bg-gray-800">
             {chatLog.map((msg, idx) => (
               <div key={idx} className="mb-2">
-                <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-                {msg.content}
+                <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
               </div>
             ))}
           </div>
@@ -229,10 +191,7 @@ export default function App() {
               className="flex-1 border border-gray-600 bg-gray-700 text-white p-2 rounded"
               placeholder="Ask something..."
             />
-            <button
-              onClick={() => handleSend()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
+            <button onClick={() => handleSend()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
               Send
             </button>
           </div>
@@ -242,26 +201,15 @@ export default function App() {
         <div className="h-1/2 p-4 overflow-auto">
           <h2 className="text-xl font-bold mb-2">Instructions</h2>
           <div className="space-y-2">
-            {loadingTutorial && (
-              <p className="text-gray-400 italic">Loading tutorial steps...</p>
+            {instructions.length === 0 && (
+              <p className="text-gray-400">Instructions will appear here after the tutorial loads.</p>
             )}
-            {!loadingTutorial && tutorialSteps.length === 0 && (
-              <p className="text-gray-400 italic">
-                Tutorial steps will appear here after selection.
-              </p>
-            )}
-            {!loadingTutorial &&
-              tutorialSteps.map((step, index) => (
-                <details
-                  key={index}
-                  className="bg-gray-800 border border-gray-600 rounded p-4"
-                >
-                  <summary className="cursor-pointer text-gray-200 font-medium">
-                    {`Step ${index + 1}`}
-                  </summary>
-                  <p className="text-gray-400 mt-2">{step}</p>
-                </details>
-              ))}
+            {instructions.map((inst, index) => (
+              <details key={index} className="bg-gray-800 border border-gray-600 rounded p-4">
+                <summary className="cursor-pointer text-gray-200 font-medium">Step {index + 1}</summary>
+                <p className="text-gray-400 mt-2 whitespace-pre-wrap">{inst}</p>
+              </details>
+            ))}
           </div>
         </div>
       </div>
