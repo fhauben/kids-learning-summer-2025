@@ -8,4 +8,5 @@ Constraints:
 1. For now, the tutorial should be focused on single file development.
 
 Other details:  
-1. I want the introduction to the tutorials and each step to have a lot of detail and depth.
+1. I want the introduction to the tutorials and each step to have a lot of detail and depth.  If you're introducing a concept to the learner, please give them some background on the concept.
+2. I want you to give some examples to the person learning to give them a place to start from

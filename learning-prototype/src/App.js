@@ -188,11 +188,25 @@ export default function App() {
               />
             )
           )}
+          <div className="mt-4 flex gap-3">
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+              onClick={() => console.log(`Completed step ${index + 1}`)}
+            >
+              ✅ I've completed this step
+            </button>
+            <button
+              className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm"
+              onClick={() => console.log(`Needs help on step ${index + 1}`)}
+            >
+              ❓ I need help
+            </button>
+          </div>
         </div>
       </details>
     );
   };
-
+  
   return (
     <div className="dark bg-gray-900 text-gray-100 flex h-screen">
       {renderModal()}
