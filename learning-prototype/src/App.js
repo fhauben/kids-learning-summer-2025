@@ -77,7 +77,7 @@ export default function App() {
       document.body.appendChild(script);
     });
   };
-  
+
   const runPython = async () => {
     await loadPyodideScript();
     if (!window.pyodide) {
@@ -90,16 +90,17 @@ export default function App() {
         from io import StringIO
         sys.stdout = sys.stderr = StringIO()
       `);
-  
+
       await window.pyodide.runPythonAsync(code);
-  
-      const output = await window.pyodide.runPythonAsync("sys.stdout.getvalue()");
+
+      const output = await window.pyodide.runPythonAsync(
+        "sys.stdout.getvalue()"
+      );
       setExecutionOutput(output);
     } catch (err) {
       setExecutionOutput(err.message);
     }
   };
-  
 
   const renderModal = () => {
     if (!showModal) return null;
@@ -272,8 +273,7 @@ export default function App() {
                   </div>
                   <div className="mt-4 flex gap-2">
                     <button className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded">
-                      <HelpCircle size={16} />
-                      I need help
+                      <HelpCircle size={16} />I need help
                     </button>
                     <button className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
                       <CheckCircle size={16} />
