@@ -167,13 +167,12 @@ export const useProgress = () => {
   };
 
   const createProfile = (name: string, grade?: string, avatar?: string) => {
-    // Auto-generate profile details if not provided
-    const defaultGrade = grade || '5th'; // Default to 5th grade
+    // Only auto-generate avatar if not provided, but don't auto-assign grade
     const defaultAvatar = avatar || getRandomAvatar(); // Random avatar if not provided
     
     const newProfile: UserProfile = {
       name: name.trim(),
-      grade: defaultGrade,
+      grade: grade || '', // Don't auto-assign grade - let user choose
       avatar: defaultAvatar,
       joinDate: new Date().toISOString(),
       progress: []
@@ -187,6 +186,24 @@ export const useProgress = () => {
   const getRandomAvatar = (): string => {
     const avatars = ['👦', '👧', '🦊', '🐱', '🐶', '🦁', '🐼', '🐨', '🦄', '🐸'];
     return avatars[Math.floor(Math.random() * avatars.length)];
+  };
+
+  // Check if profile exists for a given name and load it
+  const getProfileByName = (name: string): UserProfile | null => {
+    try {
+      const savedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        if (profile.name === name.trim()) {
+          // Load the profile into state
+          setProfile(profile);
+          return profile;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+    return null;
   };
 
   const updateProfile = (updates: Partial<UserProfile>) => {
@@ -271,6 +288,7 @@ export const useProgress = () => {
     addAchievement,
     createProfile,
     updateProfile,
+    getProfileByName,
     getProgress,
     getOverallProgress,
     exportData,

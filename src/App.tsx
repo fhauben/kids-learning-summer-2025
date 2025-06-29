@@ -55,7 +55,8 @@ function App() {
   const [currentStudent, setCurrentStudent] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>('5th');
   const [currentView, setCurrentView] = useState<CurrentView>('home');
-  const { updateProgress, createProfile, profile } = useProgress();
+  const [showGradeSelector, setShowGradeSelector] = useState(false);
+  const { updateProgress, createProfile, profile, getProfileByName, updateProfile } = useProgress();
 
   // Sync selectedGrade with profile grade
   useEffect(() => {
@@ -67,15 +68,59 @@ function App() {
   // Handle student login and auto-create profile
   const handleStudentLogin = (studentName: string) => {
     setCurrentStudent(studentName);
-    // Auto-create profile if it doesn't exist
-    if (!profile) {
-      createProfile(studentName);
+    
+    // Check if profile already exists for this name
+    const existingProfile = getProfileByName(studentName);
+    
+    if (existingProfile && existingProfile.grade) {
+      // Profile exists and has a grade, load it
+      setSelectedGrade(existingProfile.grade as GradeLevel);
+    } else {
+      // New user or profile without grade - show grade selector
+      setShowGradeSelector(true);
+    }
+  };
+
+  // Handle grade selection for new users
+  const handleGradeSelection = (grade: GradeLevel) => {
+    if (currentStudent) {
+      // Check if profile already exists
+      const existingProfile = getProfileByName(currentStudent);
+      
+      if (existingProfile) {
+        // Update existing profile with grade
+        updateProfile({ grade });
+      } else {
+        // Create new profile
+        createProfile(currentStudent, grade);
+      }
+      
+      setSelectedGrade(grade);
+      setShowGradeSelector(false);
     }
   };
 
   // If no student is logged in, show login page
   if (!currentStudent) {
     return <StudentLogin onStudentLogin={handleStudentLogin} />;
+  }
+
+  // If showing grade selector for new user
+  if (showGradeSelector) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Welcome, {currentStudent}!</h1>
+            <p className="text-gray-600">What grade are you in?</p>
+          </div>
+          <GradeSelector 
+            selectedGrade={selectedGrade} 
+            onGradeChange={handleGradeSelection}
+          />
+        </div>
+      </div>
+    );
   }
 
   // If viewing progress page
