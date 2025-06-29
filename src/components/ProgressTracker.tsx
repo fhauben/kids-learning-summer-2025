@@ -14,7 +14,7 @@ const ProgressTracker: React.FC = () => {
     updateProfile
   } = useProgress();
 
-  const [showProfileForm, setShowProfileForm] = useState(!profile);
+  const [showProfileForm, setShowProfileForm] = useState(!profile || !profile.name || !profile.grade);
   const [showImport, setShowImport] = useState(false);
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
 
@@ -35,7 +35,13 @@ const ProgressTracker: React.FC = () => {
     const grade = formData.get('grade') as string;
     const avatar = formData.get('avatar') as string;
     
-    createProfile(name, grade || undefined, avatar || undefined);
+    if (profile) {
+      // Update existing profile
+      updateProfile({ name, grade, avatar });
+    } else {
+      // Create new profile
+      createProfile(name, grade || undefined, avatar || undefined);
+    }
     setShowProfileForm(false);
   };
 
@@ -76,7 +82,9 @@ const ProgressTracker: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Create Your Profile</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {profile ? 'Edit Your Profile' : 'Create Your Profile'}
+          </h2>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -84,6 +92,7 @@ const ProgressTracker: React.FC = () => {
                 type="text"
                 name="name"
                 required
+                defaultValue={profile?.name || ''}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your name"
               />
@@ -93,6 +102,7 @@ const ProgressTracker: React.FC = () => {
               <select
                 name="grade"
                 required
+                defaultValue={profile?.grade || ''}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select your grade</option>
@@ -106,6 +116,7 @@ const ProgressTracker: React.FC = () => {
               <select
                 name="avatar"
                 required
+                defaultValue={profile?.avatar || ''}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Choose an avatar</option>
@@ -121,7 +132,7 @@ const ProgressTracker: React.FC = () => {
               type="submit"
               className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
             >
-              Create Profile
+              {profile ? 'Update Profile' : 'Create Profile'}
             </button>
           </form>
         </div>
