@@ -20,10 +20,11 @@ export default function App() {
   const [instructions, setInstructions] = useState([]);
   const [loadingInstructions, setLoadingInstructions] = useState(false);
   const [executionOutput, setExecutionOutput] = useState("");
+  const [chatError, setChatError] = useState("");
 
   useEffect(() => {
     if (!showModal) {
-      fetch("/starterCode.json")
+      fetch("/public/starterCode.json")
         .then((res) => res.json())
         .then((data) => {
           if (data && data.python) {
@@ -32,7 +33,7 @@ export default function App() {
         })
         .catch((err) => console.error("Failed to load starter code:", err));
 
-      fetch("/starterPrompt.txt")
+      fetch("/public/starterPrompt.txt")
         .then((res) => res.text())
         .then((promptText) => {
           const initialMessage = `\n${promptText}\n\nProfile: ${persona}\nLanguage: ${technology}`;
@@ -49,13 +50,86 @@ export default function App() {
     const newChatLog = [...chatLog, userMessage];
     setChatLog(newChatLog);
     if (!initialMessage) setInput("");
+    setChatError("");
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ messages: newChatLog }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await response.json();
+    try {
+      console.log('Sending request to server with messages:', newChatLog);
+      
+      const response = await fetch("http://localhost:5001/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ messages: newChatLog }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        mode: 'cors',
+        credentials: 'include'
+      });
+
+      // Log the response status
+      console.log('Response status:', response.status);
+      
+      // Handle errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text().catch(() => '');
+        console.error('Server error response:', {
+          status: response.status,
+          errorData,
+          errorText
+        });
+        
+        const errorMessage = errorData.error || errorText || `HTTP error! status: ${response.status}`;
+        setChatError(errorMessage);
+        setChatLog([...newChatLog, { 
+          role: "assistant", 
+          content: `Error: ${errorMessage}`,
+          error: true
+        }]);
+        throw new Error(errorMessage);
+      }
+      
+      // Get the response text first
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText);
+      
+      // Parse the JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        setChatError("Failed to parse server response");
+        setChatLog([...newChatLog, { 
+          role: "assistant", 
+          content: `Error: Failed to parse server response`,
+          error: true
+        }]);
+        throw parseError;
+      }
+      
+      if (!data || !data.reply) {
+        setChatError("Invalid response format from server");
+        setChatLog([...newChatLog, { 
+          role: "assistant", 
+          content: `Error: Invalid response format from server`,
+          error: true
+        }]);
+        throw new Error('Invalid response format from server');
+      }
+      
+      console.log('Processed response:', data);
+      return data;
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setChatError(errorMessage);
+      setChatLog([...newChatLog, { 
+        role: "assistant", 
+        content: `Error: ${errorMessage}`,
+        error: true
+      }]);
+      throw error;
+    }
 
     const assistantMessage = { role: "assistant", content: data.reply };
     setChatLog([...newChatLog, assistantMessage]);
@@ -217,6 +291,11 @@ export default function App() {
       <div className="w-1/2 flex flex-col">
         {/* ChatGPT Panel */}
         <div className="h-1/2 p-4 border-b border-gray-700 flex flex-col">
+          {chatError && (
+            <div className="mb-2 p-2 bg-red-700 text-white rounded font-bold text-center">
+              {chatError}
+            </div>
+          )}
           <h2 className="text-xl font-bold mb-2">ChatGPT</h2>
           <div className="flex-1 overflow-y-auto border border-gray-600 p-2 mb-2 rounded bg-gray-800">
             {chatLog.map((msg, idx) => (
@@ -236,7 +315,10 @@ export default function App() {
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setChatError("");
+              }}
               className="flex-1 border border-gray-600 bg-gray-700 text-white p-2 rounded"
               placeholder="Ask something..."
             />
