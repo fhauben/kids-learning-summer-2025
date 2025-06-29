@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map } from 'lucide-react';
 import { GradeLevel } from './types';
-import { Student } from './lib/supabase';
 import { useProgress } from './hooks/useProgress';
 
 // Components
 import StudentLogin from './components/StudentLogin';
-import ProgressPage from './components/ProgressPage';
+import ProgressTracker from './components/ProgressTracker';
 import GradeSelector from './components/GradeSelector';
 import SubjectCard from './components/SubjectCard';
 import ActivityCard from './components/ActivityCard';
@@ -49,10 +48,10 @@ type CurrentView =
   | 'angles-activity';
 
 function App() {
-  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [currentStudent, setCurrentStudent] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>('5th');
   const [currentView, setCurrentView] = useState<CurrentView>('home');
-  const { saveProgress } = useProgress(currentStudent?.id || null);
+  const { updateProgress } = useProgress();
 
   // If no student is logged in, show login page
   if (!currentStudent) {
@@ -61,7 +60,21 @@ function App() {
 
   // If viewing progress page
   if (currentView === 'progress') {
-    return <ProgressPage student={currentStudent} onBack={() => setCurrentView('home')} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <header className="text-center mb-8">
+            <button
+              onClick={() => setCurrentView('home')}
+              className="text-blue-600 hover:text-blue-800 font-semibold mb-4 flex items-center"
+            >
+              ← Back to Learning
+            </button>
+          </header>
+          <ProgressTracker />
+        </div>
+      </div>
+    );
   }
 
   // If viewing fun learning page
@@ -73,6 +86,18 @@ function App() {
     setCurrentStudent(null);
     setCurrentView('home');
     setSelectedGrade('5th');
+  };
+
+  const handleSaveProgress = (subject: string, activityName: string, score: number, total: number) => {
+    const activityId = `${activityName.toLowerCase().replace(/\s+/g, '-')}`;
+    const percentage = Math.round((score / total) * 100);
+    updateProgress(selectedGrade, subject, activityId, percentage);
+  };
+
+  const createProgressHandler = (subject: string, activityName: string) => {
+    return (score: number, total: number) => {
+      handleSaveProgress(subject, activityName, score, total);
+    };
   };
 
   const renderFifthGradeContent = () => {
@@ -334,84 +359,84 @@ function App() {
         return (
           <DictionaryThesaurus 
             onBack={() => setCurrentView('reading')} 
-            onSaveProgress={(score, total) => saveProgress('reading', 'Dictionary & Thesaurus', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('reading', 'Dictionary & Thesaurus')}
           />
         );
       case 'reading-comprehension':
         return (
           <ReadingComprehension 
             onBack={() => setCurrentView('reading')} 
-            onSaveProgress={(score, total) => saveProgress('reading', 'Reading Comprehension', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('reading', 'Reading Comprehension')}
           />
         );
       case 'state-capitals':
         return (
           <StateCapitals 
             onBack={() => setCurrentView('social-studies')} 
-            onSaveProgress={(score, total) => saveProgress('social-studies', 'State Capitals Quiz', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('social-studies', 'State Capitals Quiz')}
           />
         );
       case 'american-history':
         return (
           <AmericanHistory 
             onBack={() => setCurrentView('social-studies')} 
-            onSaveProgress={(score, total) => saveProgress('social-studies', 'American History', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('social-studies', 'American History')}
           />
         );
       case 'interactive-geography':
         return (
           <InteractiveGeography 
             onBack={() => setCurrentView('social-studies')} 
-            onSaveProgress={(score, total) => saveProgress('social-studies', 'Interactive Geography', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('social-studies', 'Interactive Geography')}
           />
         );
       case 'long-division':
         return (
           <LongDivision 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Long Division', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Long Division')}
           />
         );
       case 'math-problem-generator':
         return (
           <MathProblemGenerator 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Math Problem Generator', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Math Problem Generator')}
           />
         );
       case 'text-retelling':
         return (
           <TextRetelling 
             onBack={() => setCurrentView('reading')} 
-            onSaveProgress={(score, total) => saveProgress('reading', 'Text Retelling', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('reading', 'Text Retelling')}
           />
         );
       case 'addition-subtraction':
         return (
           <AdditionSubtraction 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Addition & Subtraction', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Addition & Subtraction')}
           />
         );
       case 'analog-clock':
         return (
           <AnalogClock 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Telling Time', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Telling Time')}
           />
         );
       case 'multiplication-tables':
         return (
           <MultiplicationTables 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Multiplication Tables', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Multiplication Tables')}
           />
         );
       case 'angles-activity':
         return (
           <AnglesActivity 
             onBack={() => setCurrentView('math')} 
-            onSaveProgress={(score, total) => saveProgress('math', 'Angles & Shapes', score, total, selectedGrade)}
+            onSaveProgress={createProgressHandler('math', 'Angles & Shapes')}
           />
         );
       default:
@@ -438,7 +463,7 @@ function App() {
           <div className="flex items-center justify-center mt-6 space-x-4">
             <div className="bg-white rounded-lg px-4 py-2 shadow-md flex items-center">
               <User className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-semibold text-gray-800">Welcome, {currentStudent.name}!</span>
+              <span className="font-semibold text-gray-800">Welcome, {currentStudent}!</span>
             </div>
             
             <button

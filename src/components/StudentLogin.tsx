@@ -1,43 +1,25 @@
 import React, { useState } from 'react'
-import { User, LogIn, UserPlus, AlertCircle } from 'lucide-react'
-import { createStudent, getStudentByName, updateStudentLastActive, Student, isSupabaseConfigured } from '../lib/supabase'
+import { User, LogIn, UserPlus } from 'lucide-react'
 
 interface StudentLoginProps {
-  onStudentLogin: (student: Student) => void
+  onStudentLogin: (studentName: string) => void
 }
 
 const StudentLogin: React.FC<StudentLoginProps> = ({ onStudentLogin }) => {
   const [studentName, setStudentName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!studentName.trim()) return
 
     setIsLoading(true)
-    setError('')
 
     try {
-      // First, try to find existing student
-      let student = await getStudentByName(studentName.trim())
-      
-      if (student) {
-        // Update last active time
-        await updateStudentLastActive(student.id)
-        onStudentLogin(student)
-      } else {
-        // Create new student
-        student = await createStudent(studentName.trim())
-        if (student) {
-          onStudentLogin(student)
-        } else {
-          setError('Failed to create student profile. Please try again.')
-        }
-      }
+      // Simple localStorage-based login - just use the name
+      onStudentLogin(studentName.trim())
     } catch (err) {
       console.error('Login error:', err)
-      setError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -57,19 +39,17 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onStudentLogin }) => {
           <p className="text-gray-600 mt-4">Enter your name to start learning!</p>
         </div>
 
-        {!isSupabaseConfigured && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-              <div>
-                <p className="text-sm text-yellow-800 font-medium">Demo Mode</p>
-                <p className="text-xs text-yellow-700 mt-1">
-                  Progress won't be saved. Click "Connect to Supabase" in the top right to enable progress tracking.
-                </p>
-              </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start">
+            <div className="text-green-600 mr-2 mt-0.5">✅</div>
+            <div>
+              <p className="text-sm text-green-800 font-medium">Progress Saved Locally</p>
+              <p className="text-xs text-green-700 mt-1">
+                Your progress will be saved in your browser and you can export/import it anytime.
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -87,12 +67,6 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onStudentLogin }) => {
               disabled={isLoading}
             />
           </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
 
           <button
             type="submit"
@@ -124,10 +98,7 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onStudentLogin }) => {
 
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
-            {isSupabaseConfigured 
-              ? "Your progress will be saved so you can continue where you left off."
-              : "Connect to Supabase to save your progress between sessions."
-            }
+            Your progress will be saved locally so you can continue where you left off.
           </p>
         </div>
       </div>

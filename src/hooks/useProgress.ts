@@ -32,194 +32,239 @@ export interface ProgressData {
   };
 }
 
-export const useProgress = (studentId: string | null) => {
-  const [progressData, setProgressData] = useState<ProgressData | null>(null);
-  const [loading, setLoading] = useState(false);
+export interface Progress {
+  grade: string;
+  subject: string;
+  completedActivities: string[];
+  scores: Record<string, number>;
+  achievements: string[];
+  streak: number;
+  lastPlayed: string;
+  totalTimeSpent: number;
+}
 
-  // Predefined achievements
-  const defaultAchievements: Achievement[] = [
-    {
-      id: 'first_activity',
-      name: 'First Steps',
-      description: 'Complete your first learning activity',
-      icon: '🎯',
-      unlocked: false,
-      requirement: { type: 'activities', value: 1 }
-    },
-    {
-      id: 'perfect_score',
-      name: 'Perfect Score',
-      description: 'Get 100% on any activity',
-      icon: '⭐',
-      unlocked: false,
-      requirement: { type: 'perfect_scores', value: 1 }
-    },
-    {
-      id: 'streak_3',
-      name: 'On Fire!',
-      description: 'Complete 3 activities in a row',
-      icon: '🔥',
-      unlocked: false,
-      requirement: { type: 'streak', value: 3 }
-    },
-    {
-      id: 'streak_7',
-      name: 'Week Warrior',
-      description: 'Complete 7 activities in a row',
-      icon: '🏆',
-      unlocked: false,
-      requirement: { type: 'streak', value: 7 }
-    },
-    {
-      id: 'math_master',
-      name: 'Math Master',
-      description: 'Complete 10 math activities',
-      icon: '🧮',
-      unlocked: false,
-      requirement: { type: 'activities', value: 10, subject: 'math' }
-    },
-    {
-      id: 'reading_expert',
-      name: 'Reading Expert',
-      description: 'Complete 10 reading activities',
-      icon: '📚',
-      unlocked: false,
-      requirement: { type: 'activities', value: 10, subject: 'reading' }
-    },
-    {
-      id: 'geography_whiz',
-      name: 'Geography Whiz',
-      description: 'Complete 10 social studies activities',
-      icon: '🌍',
-      unlocked: false,
-      requirement: { type: 'activities', value: 10, subject: 'social-studies' }
-    }
-  ];
+export interface UserProfile {
+  name: string;
+  grade: string;
+  avatar: string;
+  joinDate: string;
+  progress: Progress[];
+}
 
-  const loadProgress = useCallback(async () => {
-    if (!studentId) return;
-    
-    setLoading(true);
-    try {
-      const progressArray = await getStudentProgress(studentId);
-      
-      // Transform ActivityProgress[] into ProgressData
-      const progressData: ProgressData = {
-        totalActivities: progressArray.length,
-        totalScore: progressArray.reduce((sum, p) => sum + p.score, 0),
-        totalQuestions: progressArray.reduce((sum, p) => sum + p.total_questions, 0),
-        currentStreak: 0, // TODO: Calculate streak based on consecutive days
-        bestStreak: 0, // TODO: Track best streak
-        achievements: defaultAchievements.map(achievement => ({
-          ...achievement,
-          unlocked: false // TODO: Check against progress data
-        })),
-        subjectProgress: {}
-      };
+const STORAGE_KEYS = {
+  PROGRESS: 'kids-learning-progress',
+  PROFILE: 'kids-learning-profile',
+  SETTINGS: 'kids-learning-settings'
+};
 
-      // Calculate subject progress
-      const subjectMap: { [key: string]: { activities: number; score: number; questions: number; } } = {};
-      
-      progressArray.forEach(progress => {
-        if (!subjectMap[progress.activity_type]) {
-          subjectMap[progress.activity_type] = { activities: 0, score: 0, questions: 0 };
-        }
-        subjectMap[progress.activity_type].activities += 1;
-        subjectMap[progress.activity_type].score += progress.score;
-        subjectMap[progress.activity_type].questions += progress.total_questions;
-      });
+export const useProgress = () => {
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-      // Convert to final format
-      Object.keys(subjectMap).forEach(subject => {
-        const data = subjectMap[subject];
-        progressData.subjectProgress[subject] = {
-          activities: data.activities,
-          score: data.score,
-          questions: data.questions,
-          averageScore: data.questions > 0 ? Math.round((data.score / data.questions) * 100) : 0
-        };
-      });
-
-      setProgressData(progressData);
-    } catch (error) {
-      console.error('Error loading progress:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [studentId]);
-
-  const saveProgress = useCallback(async (
-    activityType: string,
-    activityName: string,
-    score: number,
-    totalQuestions: number,
-    gradeLevel: string
-  ) => {
-    if (!studentId) return;
-
-    try {
-      await saveActivityProgress(
-        studentId,
-        activityType,
-        activityName,
-        score,
-        totalQuestions,
-        gradeLevel
-      );
-      
-      // Reload progress data after saving
-      await loadProgress();
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    }
-  }, [studentId, loadProgress]);
-
-  const checkAchievements = useCallback((newProgress: ProgressData): Achievement[] => {
-    const newlyUnlocked: Achievement[] = [];
-    
-    defaultAchievements.forEach(achievement => {
-      if (achievement.unlocked) return; // Already unlocked
-      
-      let shouldUnlock = false;
-      
-      switch (achievement.requirement.type) {
-        case 'activities':
-          if (achievement.requirement.subject) {
-            const subjectProgress = newProgress.subjectProgress[achievement.requirement.subject];
-            shouldUnlock = subjectProgress && subjectProgress.activities >= achievement.requirement.value;
-          } else {
-            shouldUnlock = newProgress.totalActivities >= achievement.requirement.value;
-          }
-          break;
-        case 'streak':
-          shouldUnlock = newProgress.currentStreak >= achievement.requirement.value;
-          break;
-        case 'perfect_scores':
-          // This would need to be tracked separately in the database
-          shouldUnlock = newProgress.totalScore / newProgress.totalQuestions >= 0.95; // 95% or higher
-          break;
-      }
-      
-      if (shouldUnlock) {
-        achievement.unlocked = true;
-        achievement.unlockedAt = new Date();
-        newlyUnlocked.push(achievement);
-      }
-    });
-    
-    return newlyUnlocked;
+  // Load data from localStorage on mount
+  useEffect(() => {
+    loadFromStorage();
   }, []);
 
-  useEffect(() => {
-    loadProgress();
-  }, [loadProgress]);
+  const loadFromStorage = () => {
+    try {
+      const savedProgress = localStorage.getItem(STORAGE_KEYS.PROGRESS);
+      const savedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      
+      if (savedProgress) {
+        setProgress(JSON.parse(savedProgress));
+      }
+      
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  return { 
-    saveProgress, 
-    progressData, 
-    loading, 
-    loadProgress,
-    checkAchievements,
-    defaultAchievements
+  const saveToStorage = (newProgress: Progress[], newProfile?: UserProfile) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(newProgress));
+      if (newProfile) {
+        localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(newProfile));
+      }
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  const updateProgress = (grade: string, subject: string, activityId: string, score?: number) => {
+    const existingProgress = progress.find(p => p.grade === grade && p.subject === subject);
+    
+    let updatedProgress: Progress;
+    
+    if (existingProgress) {
+      // Update existing progress
+      updatedProgress = {
+        ...existingProgress,
+        completedActivities: existingProgress.completedActivities.includes(activityId) 
+          ? existingProgress.completedActivities 
+          : [...existingProgress.completedActivities, activityId],
+        scores: score ? { ...existingProgress.scores, [activityId]: score } : existingProgress.scores,
+        lastPlayed: new Date().toISOString(),
+        totalTimeSpent: existingProgress.totalTimeSpent + 1
+      };
+      
+      // Update streak logic
+      const lastPlayedDate = new Date(existingProgress.lastPlayed);
+      const today = new Date();
+      const daysDiff = Math.floor((today.getTime() - lastPlayedDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff <= 1) {
+        updatedProgress.streak = existingProgress.streak + 1;
+      } else if (daysDiff > 1) {
+        updatedProgress.streak = 1;
+      }
+    } else {
+      // Create new progress
+      updatedProgress = {
+        grade,
+        subject,
+        completedActivities: [activityId],
+        scores: score ? { [activityId]: score } : {},
+        achievements: [],
+        streak: 1,
+        lastPlayed: new Date().toISOString(),
+        totalTimeSpent: 1
+      };
+    }
+
+    const newProgress = existingProgress 
+      ? progress.map(p => p.grade === grade && p.subject === subject ? updatedProgress : p)
+      : [...progress, updatedProgress];
+
+    setProgress(newProgress);
+    saveToStorage(newProgress);
+    
+    return updatedProgress;
+  };
+
+  const addAchievement = (grade: string, subject: string, achievement: string) => {
+    const existingProgress = progress.find(p => p.grade === grade && p.subject === subject);
+    
+    if (existingProgress && !existingProgress.achievements.includes(achievement)) {
+      const updatedProgress = {
+        ...existingProgress,
+        achievements: [...existingProgress.achievements, achievement]
+      };
+      
+      const newProgress = progress.map(p => 
+        p.grade === grade && p.subject === subject ? updatedProgress : p
+      );
+      
+      setProgress(newProgress);
+      saveToStorage(newProgress);
+    }
+  };
+
+  const createProfile = (name: string, grade: string, avatar: string) => {
+    const newProfile: UserProfile = {
+      name,
+      grade,
+      avatar,
+      joinDate: new Date().toISOString(),
+      progress: []
+    };
+    
+    setProfile(newProfile);
+    saveToStorage(progress, newProfile);
+  };
+
+  const updateProfile = (updates: Partial<UserProfile>) => {
+    if (profile) {
+      const updatedProfile = { ...profile, ...updates };
+      setProfile(updatedProfile);
+      saveToStorage(progress, updatedProfile);
+    }
+  };
+
+  const getProgress = (grade: string, subject: string): Progress | null => {
+    return progress.find(p => p.grade === grade && p.subject === subject) || null;
+  };
+
+  const getOverallProgress = () => {
+    const totalActivities = progress.reduce((sum, p) => sum + p.completedActivities.length, 0);
+    const totalScores = progress.reduce((sum, p) => {
+      const scores = Object.values(p.scores);
+      return sum + scores.reduce((s, score) => s + score, 0);
+    }, 0);
+    const averageScore = totalScores > 0 ? Math.round(totalScores / totalActivities) : 0;
+    
+    return {
+      totalActivities,
+      averageScore,
+      totalStreak: progress.reduce((sum, p) => sum + p.streak, 0),
+      totalTimeSpent: progress.reduce((sum, p) => sum + p.totalTimeSpent, 0)
+    };
+  };
+
+  const exportData = () => {
+    const data = {
+      profile,
+      progress,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kids-learning-progress-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (data.progress) {
+          setProgress(data.progress);
+          saveToStorage(data.progress);
+        }
+        if (data.profile) {
+          setProfile(data.profile);
+          saveToStorage(data.progress || progress, data.profile);
+        }
+      } catch (error) {
+        console.error('Error importing data:', error);
+        alert('Invalid file format. Please select a valid progress file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const clearAllData = () => {
+    if (confirm('Are you sure you want to clear all progress? This cannot be undone.')) {
+      localStorage.removeItem(STORAGE_KEYS.PROGRESS);
+      localStorage.removeItem(STORAGE_KEYS.PROFILE);
+      setProgress([]);
+      setProfile(null);
+    }
+  };
+
+  return {
+    progress,
+    profile,
+    isLoading,
+    updateProgress,
+    addAchievement,
+    createProfile,
+    updateProfile,
+    getProgress,
+    getOverallProgress,
+    exportData,
+    importData,
+    clearAllData
   };
 };
