@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map } from 'lucide-react';
+import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target } from 'lucide-react';
 import { GradeLevel } from './types';
 import { useProgress } from './hooks/useProgress';
 
 // Components
 import StudentLogin from './components/StudentLogin';
 import ProgressTracker from './components/ProgressTracker';
+import DailyChallenge from './components/DailyChallenge';
+import LearningPath from './components/LearningPath';
 import GradeSelector from './components/GradeSelector';
 import SubjectCard from './components/SubjectCard';
 import ActivityCard from './components/ActivityCard';
@@ -33,6 +35,8 @@ type CurrentView =
   | 'math'
   | 'social-studies'
   | 'progress'
+  | 'daily-challenges'
+  | 'learning-paths'
   | 'fun-learning'
   | 'dictionary-thesaurus'
   | 'reading-comprehension'
@@ -72,6 +76,44 @@ function App() {
             </button>
           </header>
           <ProgressTracker />
+        </div>
+      </div>
+    );
+  }
+
+  // If viewing daily challenges
+  if (currentView === 'daily-challenges') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <header className="text-center mb-8">
+            <button
+              onClick={() => setCurrentView('home')}
+              className="text-blue-600 hover:text-blue-800 font-semibold mb-4 flex items-center"
+            >
+              ← Back to Learning
+            </button>
+          </header>
+          <DailyChallenge />
+        </div>
+      </div>
+    );
+  }
+
+  // If viewing learning paths
+  if (currentView === 'learning-paths') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <header className="text-center mb-8">
+            <button
+              onClick={() => setCurrentView('home')}
+              className="text-blue-600 hover:text-blue-800 font-semibold mb-4 flex items-center"
+            >
+              ← Back to Learning
+            </button>
+          </header>
+          <LearningPath />
         </div>
       </div>
     );
@@ -460,7 +502,7 @@ function App() {
           <p className="text-xl text-gray-600">Interactive lessons for 3rd and 5th grade students</p>
           
           {/* Student Info and Navigation */}
-          <div className="flex items-center justify-center mt-6 space-x-4">
+          <div className="flex items-center justify-center mt-6 space-x-4 flex-wrap gap-2">
             <div className="bg-white rounded-lg px-4 py-2 shadow-md flex items-center">
               <User className="w-5 h-5 text-blue-600 mr-2" />
               <span className="font-semibold text-gray-800">Welcome, {currentStudent}!</span>
@@ -472,6 +514,22 @@ function App() {
             >
               <BarChart3 className="w-5 h-5 mr-2" />
               My Progress
+            </button>
+
+            <button
+              onClick={() => setCurrentView('daily-challenges')}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center"
+            >
+              <Calendar className="w-5 h-5 mr-2" />
+              Daily Challenges
+            </button>
+
+            <button
+              onClick={() => setCurrentView('learning-paths')}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center"
+            >
+              <Target className="w-5 h-5 mr-2" />
+              Learning Paths
             </button>
 
             <button
