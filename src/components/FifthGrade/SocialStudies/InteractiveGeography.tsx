@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Map, Globe, Mountain, Tree, Building, Water, RotateCcw, Award } from 'lucide-react';
+import { ArrowLeft, Map, Globe, Mountain, Leaf, Building, RotateCcw, Award } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
 
 interface InteractiveGeographyProps {
@@ -252,7 +252,7 @@ const InteractiveGeography: React.FC<InteractiveGeographyProps> = ({ onBack, onS
       case 'regions': return <Globe className="w-5 h-5" />;
       case 'landmarks': return <Building className="w-5 h-5" />;
       case 'landforms': return <Mountain className="w-5 h-5" />;
-      case 'climate': return <Tree className="w-5 h-5" />;
+      case 'climate': return <Leaf className="w-5 h-5" />;
       case 'cities': return <Building className="w-5 h-5" />;
       default: return <Map className="w-5 h-5" />;
     }

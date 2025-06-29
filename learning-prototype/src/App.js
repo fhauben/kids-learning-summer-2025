@@ -118,6 +118,17 @@ export default function App() {
       }
       
       console.log('Processed response:', data);
+      
+      // Process the successful response
+      const assistantMessage = { role: "assistant", content: data.reply };
+      setChatLog([...newChatLog, assistantMessage]);
+
+      if (isInitial) {
+        const steps = data.reply.split(/(?=Step \d+)/);
+        setInstructions(steps);
+        setLoadingInstructions(false);
+      }
+      
       return data;
     } catch (error) {
       console.error('Error:', error);
@@ -129,15 +140,6 @@ export default function App() {
         error: true
       }]);
       throw error;
-    }
-
-    const assistantMessage = { role: "assistant", content: data.reply };
-    setChatLog([...newChatLog, assistantMessage]);
-
-    if (isInitial) {
-      const steps = data.reply.split(/(?=Step \d+)/);
-      setInstructions(steps);
-      setLoadingInstructions(false);
     }
   };
 
