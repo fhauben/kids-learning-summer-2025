@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://frankhauben.github.io/kids-learning-summer-2025",
+  "homepage": "https://fhauben.github.io/kids-learning-summer-2025",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
