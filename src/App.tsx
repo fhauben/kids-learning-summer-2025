@@ -37,7 +37,7 @@ type CurrentView =
   | 'progress'
   | 'daily-challenges'
   | 'learning-paths'
-  | 'fun-learning'
+  | 'fun-facts'
   | 'dictionary-thesaurus'
   | 'reading-comprehension'
   | 'state-capitals'
@@ -181,7 +181,7 @@ function App() {
   }
 
   // If viewing fun learning page
-  if (currentView === 'fun-learning') {
+  if (currentView === 'fun-facts') {
     return <GuinnessRecords onBack={() => setCurrentView('home')} />;
   }
 
@@ -261,10 +261,17 @@ function App() {
             />
             <ActivityCard
               title="Interactive Geography"
-              description="Learn about regions, landmarks, and geography of the United States"
+              description="Explore US regions and landmarks with interactive maps"
               icon={Map}
-              color="border-l-blue-500"
+              color="border-l-purple-500"
               onClick={() => setCurrentView('interactive-geography')}
+            />
+            <ActivityCard
+              title="Fun Facts"
+              description="Discover amazing world records and interesting facts"
+              icon={Trophy}
+              color="border-l-yellow-500"
+              onClick={() => setCurrentView('fun-facts')}
             />
           </div>
         </div>
@@ -377,6 +384,13 @@ function App() {
               icon={BookOpen}
               color="border-l-amber-500"
               onClick={() => setCurrentView('american-history')}
+            />
+            <ActivityCard
+              title="Fun Facts"
+              description="Discover amazing world records and interesting facts"
+              icon={Trophy}
+              color="border-l-yellow-500"
+              onClick={() => setCurrentView('fun-facts')}
             />
           </div>
         </div>
@@ -591,14 +605,6 @@ function App() {
             >
               <Target className="w-5 h-5 mr-2" />
               Learning Paths
-            </button>
-
-            <button
-              onClick={() => setCurrentView('fun-learning')}
-              className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-700 transition-colors flex items-center"
-            >
-              <Trophy className="w-5 h-5 mr-2" />
-              Fun Records
             </button>
             
             <button

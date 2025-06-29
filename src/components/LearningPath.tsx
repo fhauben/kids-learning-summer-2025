@@ -30,8 +30,9 @@ const LearningPath: React.FC = () => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const learningPaths: LearningPath[] = [
+    // 3rd Grade Learning Paths
     {
-      id: 'math-foundations',
+      id: 'math-foundations-3rd',
       title: 'Math Foundations',
       description: 'Build a strong foundation in basic math concepts',
       subject: 'math',
@@ -97,18 +98,18 @@ const LearningPath: React.FC = () => {
       ]
     },
     {
-      id: 'reading-comprehension',
+      id: 'reading-comprehension-3rd',
       title: 'Reading Comprehension',
       description: 'Develop strong reading and comprehension skills',
       subject: 'reading',
-      grade: '5th',
-      totalSteps: 4,
+      grade: '3rd',
+      totalSteps: 3,
       completedSteps: 0,
       steps: [
         {
-          id: 'vocabulary-building',
-          title: 'Vocabulary Building',
-          description: 'Learn new words and their meanings',
+          id: 'text-retelling',
+          title: 'Text Retelling',
+          description: 'Read stories and practice retelling them',
           type: 'reading',
           difficulty: 'beginner',
           estimatedTime: 20,
@@ -117,53 +118,42 @@ const LearningPath: React.FC = () => {
           prerequisites: []
         },
         {
-          id: 'reading-passages',
-          title: 'Reading Passages',
-          description: 'Practice reading and understanding texts',
+          id: 'vocabulary-building',
+          title: 'Vocabulary Building',
+          description: 'Learn new words and their meanings',
           type: 'reading',
           difficulty: 'intermediate',
           estimatedTime: 25,
           completed: false,
           locked: false,
-          prerequisites: ['vocabulary-building']
+          prerequisites: ['text-retelling']
         },
         {
-          id: 'comprehension-questions',
-          title: 'Comprehension Questions',
-          description: 'Answer questions about what you read',
+          id: 'comprehension-practice',
+          title: 'Comprehension Practice',
+          description: 'Practice understanding what you read',
           type: 'quiz',
           difficulty: 'intermediate',
           estimatedTime: 30,
           completed: false,
           locked: false,
-          prerequisites: ['reading-passages']
-        },
-        {
-          id: 'text-analysis',
-          title: 'Text Analysis',
-          description: 'Analyze and interpret different types of texts',
-          type: 'activity',
-          difficulty: 'advanced',
-          estimatedTime: 35,
-          completed: false,
-          locked: false,
-          prerequisites: ['comprehension-questions']
+          prerequisites: ['vocabulary-building']
         }
       ]
     },
     {
-      id: 'us-geography',
+      id: 'us-geography-3rd',
       title: 'US Geography',
       description: 'Explore the geography and history of the United States',
       subject: 'social-studies',
-      grade: '5th',
-      totalSteps: 3,
+      grade: '3rd',
+      totalSteps: 2,
       completedSteps: 0,
       steps: [
         {
-          id: 'state-capitals',
-          title: 'State Capitals',
-          description: 'Learn all 50 state capitals',
+          id: 'state-capitals-basic',
+          title: 'State Capitals Basics',
+          description: 'Learn the basics of state capitals',
           type: 'activity',
           difficulty: 'beginner',
           estimatedTime: 30,
@@ -172,26 +162,170 @@ const LearningPath: React.FC = () => {
           prerequisites: []
         },
         {
-          id: 'american-history',
-          title: 'American History',
+          id: 'american-history-intro',
+          title: 'American History Introduction',
           description: 'Learn about key events in American history',
           type: 'reading',
           difficulty: 'intermediate',
           estimatedTime: 40,
           completed: false,
           locked: false,
-          prerequisites: ['state-capitals']
+          prerequisites: ['state-capitals-basic']
+        }
+      ]
+    },
+    // 5th Grade Learning Paths
+    {
+      id: 'math-advanced-5th',
+      title: 'Advanced Math',
+      description: 'Master advanced math concepts and problem solving',
+      subject: 'math',
+      grade: '5th',
+      totalSteps: 4,
+      completedSteps: 0,
+      steps: [
+        {
+          id: 'long-division',
+          title: 'Long Division',
+          description: 'Master long division with remainders',
+          type: 'practice',
+          difficulty: 'intermediate',
+          estimatedTime: 30,
+          completed: false,
+          locked: false,
+          prerequisites: []
         },
         {
-          id: 'interactive-geography',
+          id: 'multiplication-advanced',
+          title: 'Advanced Multiplication',
+          description: 'Practice multi-digit multiplication',
+          type: 'practice',
+          difficulty: 'intermediate',
+          estimatedTime: 25,
+          completed: false,
+          locked: false,
+          prerequisites: ['long-division']
+        },
+        {
+          id: 'problem-solving',
+          title: 'Math Problem Solving',
+          description: 'Solve complex word problems',
+          type: 'activity',
+          difficulty: 'advanced',
+          estimatedTime: 35,
+          completed: false,
+          locked: false,
+          prerequisites: ['multiplication-advanced']
+        },
+        {
+          id: 'fractions-intro',
+          title: 'Introduction to Fractions',
+          description: 'Learn basic fraction concepts',
+          type: 'activity',
+          difficulty: 'advanced',
+          estimatedTime: 40,
+          completed: false,
+          locked: false,
+          prerequisites: ['problem-solving']
+        }
+      ]
+    },
+    {
+      id: 'reading-comprehension-5th',
+      title: 'Advanced Reading',
+      description: 'Develop advanced reading and comprehension skills',
+      subject: 'reading',
+      grade: '5th',
+      totalSteps: 4,
+      completedSteps: 0,
+      steps: [
+        {
+          id: 'vocabulary-building-advanced',
+          title: 'Advanced Vocabulary',
+          description: 'Learn complex words and their meanings',
+          type: 'reading',
+          difficulty: 'intermediate',
+          estimatedTime: 25,
+          completed: false,
+          locked: false,
+          prerequisites: []
+        },
+        {
+          id: 'reading-passages-advanced',
+          title: 'Advanced Reading Passages',
+          description: 'Read and understand complex texts',
+          type: 'reading',
+          difficulty: 'intermediate',
+          estimatedTime: 30,
+          completed: false,
+          locked: false,
+          prerequisites: ['vocabulary-building-advanced']
+        },
+        {
+          id: 'comprehension-questions-advanced',
+          title: 'Advanced Comprehension',
+          description: 'Answer complex questions about texts',
+          type: 'quiz',
+          difficulty: 'advanced',
+          estimatedTime: 35,
+          completed: false,
+          locked: false,
+          prerequisites: ['reading-passages-advanced']
+        },
+        {
+          id: 'text-analysis-advanced',
+          title: 'Text Analysis',
+          description: 'Analyze and interpret different types of texts',
+          type: 'activity',
+          difficulty: 'advanced',
+          estimatedTime: 40,
+          completed: false,
+          locked: false,
+          prerequisites: ['comprehension-questions-advanced']
+        }
+      ]
+    },
+    {
+      id: 'us-geography-5th',
+      title: 'Advanced US Geography',
+      description: 'Explore the geography and history of the United States',
+      subject: 'social-studies',
+      grade: '5th',
+      totalSteps: 3,
+      completedSteps: 0,
+      steps: [
+        {
+          id: 'state-capitals-advanced',
+          title: 'State Capitals Mastery',
+          description: 'Master all 50 state capitals',
+          type: 'activity',
+          difficulty: 'intermediate',
+          estimatedTime: 35,
+          completed: false,
+          locked: false,
+          prerequisites: []
+        },
+        {
+          id: 'american-history-advanced',
+          title: 'American History',
+          description: 'Learn about key events in American history',
+          type: 'reading',
+          difficulty: 'intermediate',
+          estimatedTime: 45,
+          completed: false,
+          locked: false,
+          prerequisites: ['state-capitals-advanced']
+        },
+        {
+          id: 'interactive-geography-advanced',
           title: 'Interactive Geography',
           description: 'Explore regions and landmarks interactively',
           type: 'activity',
           difficulty: 'advanced',
-          estimatedTime: 45,
+          estimatedTime: 50,
           completed: false,
           locked: false,
-          prerequisites: ['american-history']
+          prerequisites: ['american-history-advanced']
         }
       ]
     }
@@ -242,7 +376,7 @@ const LearningPath: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
@@ -252,41 +386,84 @@ const LearningPath: React.FC = () => {
         <p className="text-gray-600">Follow structured learning paths to master different subjects!</p>
       </div>
 
-      {/* Learning Paths Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {learningPaths.map((path) => (
-          <div
-            key={path.id}
-            className={`bg-white rounded-lg shadow-md border-l-4 ${getSubjectColor(path.subject)} cursor-pointer transition-all duration-200 hover:shadow-lg`}
-            onClick={() => setSelectedPath(selectedPath === path.id ? null : path.id)}
-          >
-            <div className="p-6">
-              <div className="flex items-center mb-3">
-                <div className="text-blue-600 mr-3">
-                  {getSubjectIcon(path.subject)}
+      {/* 3rd Grade Learning Paths */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-blue-200 pb-2">3rd Grade Learning Paths</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {learningPaths.filter(path => path.grade === '3rd').map((path) => (
+            <div
+              key={path.id}
+              className={`bg-white rounded-lg shadow-md border-l-4 ${getSubjectColor(path.subject)} cursor-pointer transition-all duration-200 hover:shadow-lg`}
+              onClick={() => setSelectedPath(selectedPath === path.id ? null : path.id)}
+            >
+              <div className="p-6">
+                <div className="flex items-center mb-3">
+                  <div className="text-blue-600 mr-3">
+                    {getSubjectIcon(path.subject)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">{path.title}</h3>
+                    <p className="text-sm text-gray-600">Grade {path.grade}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{path.title}</h3>
-                  <p className="text-sm text-gray-600">Grade {path.grade}</p>
-                </div>
-              </div>
-              
-              <p className="text-gray-600 text-sm mb-4">{path.description}</p>
-              
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  {path.completedSteps}/{path.totalSteps} steps
-                </div>
-                <div className="w-16 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(path.completedSteps / path.totalSteps) * 100}%` }}
-                  ></div>
+                
+                <p className="text-gray-600 text-sm mb-4">{path.description}</p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    {path.completedSteps}/{path.totalSteps} steps
+                  </div>
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(path.completedSteps / path.totalSteps) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      {/* 5th Grade Learning Paths */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-green-200 pb-2">5th Grade Learning Paths</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {learningPaths.filter(path => path.grade === '5th').map((path) => (
+            <div
+              key={path.id}
+              className={`bg-white rounded-lg shadow-md border-l-4 ${getSubjectColor(path.subject)} cursor-pointer transition-all duration-200 hover:shadow-lg`}
+              onClick={() => setSelectedPath(selectedPath === path.id ? null : path.id)}
+            >
+              <div className="p-6">
+                <div className="flex items-center mb-3">
+                  <div className="text-blue-600 mr-3">
+                    {getSubjectIcon(path.subject)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">{path.title}</h3>
+                    <p className="text-sm text-gray-600">Grade {path.grade}</p>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 text-sm mb-4">{path.description}</p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    {path.completedSteps}/{path.totalSteps} steps
+                  </div>
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(path.completedSteps / path.totalSteps) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Selected Path Details */}
