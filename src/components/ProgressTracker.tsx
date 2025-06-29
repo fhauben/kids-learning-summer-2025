@@ -35,7 +35,7 @@ const ProgressTracker: React.FC = () => {
     const grade = formData.get('grade') as string;
     const avatar = formData.get('avatar') as string;
     
-    createProfile(name, grade, avatar);
+    createProfile(name, grade || undefined, avatar || undefined);
     setShowProfileForm(false);
   };
 

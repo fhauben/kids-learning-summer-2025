@@ -166,17 +166,27 @@ export const useProgress = () => {
     }
   };
 
-  const createProfile = (name: string, grade: string, avatar: string) => {
+  const createProfile = (name: string, grade?: string, avatar?: string) => {
+    // Auto-generate profile details if not provided
+    const defaultGrade = grade || '5th'; // Default to 5th grade
+    const defaultAvatar = avatar || getRandomAvatar(); // Random avatar if not provided
+    
     const newProfile: UserProfile = {
-      name,
-      grade,
-      avatar,
+      name: name.trim(),
+      grade: defaultGrade,
+      avatar: defaultAvatar,
       joinDate: new Date().toISOString(),
       progress: []
     };
     
     setProfile(newProfile);
     saveToStorage(progress, newProfile);
+  };
+
+  // Helper function to get a random avatar
+  const getRandomAvatar = (): string => {
+    const avatars = ['👦', '👧', '🦊', '🐱', '🐶', '🦁', '🐼', '🐨', '🦄', '🐸'];
+    return avatars[Math.floor(Math.random() * avatars.length)];
   };
 
   const updateProfile = (updates: Partial<UserProfile>) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target } from 'lucide-react';
 import { GradeLevel } from './types';
 import { useProgress } from './hooks/useProgress';
@@ -55,11 +55,27 @@ function App() {
   const [currentStudent, setCurrentStudent] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>('5th');
   const [currentView, setCurrentView] = useState<CurrentView>('home');
-  const { updateProgress } = useProgress();
+  const { updateProgress, createProfile, profile } = useProgress();
+
+  // Sync selectedGrade with profile grade
+  useEffect(() => {
+    if (profile && profile.grade) {
+      setSelectedGrade(profile.grade as GradeLevel);
+    }
+  }, [profile]);
+
+  // Handle student login and auto-create profile
+  const handleStudentLogin = (studentName: string) => {
+    setCurrentStudent(studentName);
+    // Auto-create profile if it doesn't exist
+    if (!profile) {
+      createProfile(studentName);
+    }
+  };
 
   // If no student is logged in, show login page
   if (!currentStudent) {
-    return <StudentLogin onStudentLogin={setCurrentStudent} />;
+    return <StudentLogin onStudentLogin={handleStudentLogin} />;
   }
 
   // If viewing progress page
