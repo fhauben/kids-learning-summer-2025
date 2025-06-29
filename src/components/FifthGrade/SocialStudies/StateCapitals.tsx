@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Map, ArrowLeft, CheckCircle, XCircle, Trophy, ChevronRight, Shuffle } from 'lucide-react';
 import { states } from '../../../data/states';
 import GoogleMapWebComponent from '../../GoogleMapWebComponent';
+import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface StateCapitalsProps {
   onBack: () => void;
@@ -14,85 +16,6 @@ interface AnswerResult {
   correct: boolean;
   userAnswer?: string;
 }
-
-/**
- * CelebrationModal: Shows a random animal emoji and plays a random sound when a question is answered correctly.
- */
-const ANIMAL_EMOJIS = [
-  { emoji: '🦊', size: 'text-8xl' },
-  { emoji: '🐧', size: 'text-7xl' },
-  { emoji: '🐘', size: 'text-9xl' },
-  { emoji: '🦁', size: 'text-8xl' },
-  { emoji: '🐼', size: 'text-8xl' },
-  { emoji: '🐸', size: 'text-7xl' },
-  { emoji: '🐨', size: 'text-8xl' },
-  { emoji: '🦄', size: 'text-9xl' },
-  { emoji: '🐻', size: 'text-8xl' },
-  { emoji: '🐵', size: 'text-7xl' },
-  { emoji: '🐶', size: 'text-8xl' },
-  { emoji: '🐱', size: 'text-7xl' },
-  { emoji: '🦉', size: 'text-8xl' },
-  { emoji: '🦓', size: 'text-8xl' },
-  { emoji: '🦒', size: 'text-9xl' },
-  { emoji: '🦜', size: 'text-7xl' },
-  { emoji: '🦩', size: 'text-8xl' },
-  { emoji: '🦥', size: 'text-8xl' },
-  { emoji: '🦔', size: 'text-7xl' },
-  { emoji: '🦦', size: 'text-8xl' },
-];
-
-const SOUND_URLS = [
-  // Public domain/CC0 sound effects
-  'https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa4c7b.mp3', // tada
-  'https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1e4b.mp3', // success bell
-  'https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1e4b.mp3', // ding
-  'https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1e4b.mp3', // chime
-  'https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1e4b.mp3', // pop
-  'https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b1e4b.mp3', // sparkle
-];
-
-const getRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
-const CelebrationModal: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onClose }) => {
-  const animal = useRef(getRandom(ANIMAL_EMOJIS));
-  const sound = useRef(getRandom(SOUND_URLS));
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    if (show) {
-      animal.current = getRandom(ANIMAL_EMOJIS);
-      sound.current = getRandom(SOUND_URLS);
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
-    }
-  }, [show]);
-
-  if (!show) return null;
-
-  // Random animation
-  const animationClasses = [
-    'animate-bounce',
-    'animate-spin',
-    'animate-pulse',
-    'animate-wiggle', // custom, fallback to bounce if not defined
-  ];
-  const animation = getRandom(animationClasses);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="relative flex flex-col items-center">
-        <span className={`${animal.current.size} ${animation} drop-shadow-lg select-none`} style={{ filter: 'drop-shadow(0 0 20px #fff)' }}>
-          {animal.current.emoji}
-        </span>
-        <div className="text-4xl font-bold text-green-600 animate-pulse mt-4">🎉 CORRECT! 🎉</div>
-        <div className="text-2xl font-semibold text-green-700 animate-bounce mt-2">Great Job!</div>
-        <audio ref={audioRef} src={sound.current} autoPlay />
-      </div>
-    </div>
-  );
-};
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -115,6 +38,10 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   const [round, setRound] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hasCompletedRound, setHasCompletedRound] = useState(false);
+  const [modalScore, setModalScore] = useState(0);
+  const [modalTotal, setModalTotal] = useState(0);
+
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
 
   // Initialize shuffled states on component mount
   useEffect(() => {
@@ -124,13 +51,13 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   const currentState = shuffledStates[currentStateIndex];
   
   // Generate wrong answers from other states
-  const wrongAnswers = shuffledStates
+  const wrongAnswerOptions = shuffledStates
     .filter(state => state.name !== currentState?.name)
     .map(state => state.capital)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
   
-  const allOptions = currentState ? [currentState.capital, ...wrongAnswers].sort(() => Math.random() - 0.5) : [];
+  const allOptions = currentState ? [currentState.capital, ...wrongAnswerOptions].sort(() => Math.random() - 0.5) : [];
 
   // Dynamic map settings based on current state
   const getMapSettings = () => {
@@ -163,18 +90,16 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   const handleAnswer = (answer: string) => {
     if (!currentState) return;
     
+    playClick(); // Play click sound
     setSelectedAnswer(answer);
     setShowResult(true);
     
     const isCorrect = answer === currentState.capital;
     if (isCorrect) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
-      setShowSuccessModal(true);
-      
-      // Hide success modal after 3 seconds
-      setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
 
     // Add to answer history
@@ -188,6 +113,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   };
 
   const handleNext = () => {
+    playClick(); // Play click sound
     setAnsweredQuestions(answeredQuestions + 1);
     
     if (currentStateIndex < shuffledStates.length - 1) {
@@ -202,6 +128,11 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
         setHasCompletedRound(true);
       }
       
+      // Show completion modal
+      setModalScore(score);
+      setModalTotal(50);
+      setShowSuccessModal(true);
+      
       setRound(round + 1);
       setShuffledStates(shuffleArray(states));
       setCurrentStateIndex(0);
@@ -212,6 +143,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   };
 
   const resetQuiz = () => {
+    playClick(); // Play click sound
     setShuffledStates(shuffleArray(states));
     setCurrentStateIndex(0);
     setScore(0);
@@ -239,10 +171,15 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3">
       <div className="max-w-7xl mx-auto">
-        {/* Celebration Modal */}
+        {/* Enhanced Celebration Modal */}
         <CelebrationModal 
-          show={showSuccessModal} 
-          onClose={() => setShowSuccessModal(false)} 
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          score={modalScore}
+          total={modalTotal}
+          message="You completed the State Capitals quiz!"
+          showStreak={true}
+          streakCount={round - 1}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-[calc(100vh-24px)]">
@@ -254,7 +191,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                 <div className="flex items-center">
                   <button
                     onClick={onBack}
-                    className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
+                    className="flex items-center text-blue-600 hover:text-blue-800 mr-4 transition-colors hover:scale-105 transform duration-200"
                   >
                     <ArrowLeft className="w-4 h-4 mr-1" />
                     Social Studies
@@ -274,7 +211,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
               </div>
 
               {/* State Info - Compact */}
-              <div className="bg-blue-50 rounded-lg p-3 mb-3">
+              <div className="bg-blue-50 rounded-lg p-3 mb-3 transform transition-all duration-300 hover:scale-[1.02]">
                 <h3 className="text-xl font-bold text-blue-800">{currentState.name}</h3>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-700 text-sm">Region: {currentState.region}</p>
@@ -287,7 +224,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
               </div>
 
               {/* US Overview Map - KEEP ORIGINAL SIZE */}
-              <div className="bg-gray-100 rounded-lg p-4 mb-3">
+              <div className="bg-gray-100 rounded-lg p-4 mb-3 transform transition-all duration-300 hover:shadow-md">
                 <div className="h-96 w-full rounded-lg overflow-hidden">
                   <GoogleMapWebComponent
                     center={mapSettings.center}
@@ -320,20 +257,20 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                       key={index}
                       onClick={() => !showResult && handleAnswer(option)}
                       disabled={showResult}
-                      className={`p-3 rounded-lg border-2 text-center transition-all ${
+                      className={`p-3 rounded-lg border-2 text-center transition-all duration-300 transform hover:scale-105 ${
                         showResult
                           ? option === currentState.capital
-                            ? 'bg-green-100 border-green-500 text-green-800'
+                            ? 'bg-green-100 border-green-500 text-green-800 animate-pulse'
                             : selectedAnswer === option
                             ? 'bg-red-100 border-red-500 text-red-800'
                             : 'bg-gray-100 border-gray-300 text-gray-500'
-                          : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                          : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md'
                       }`}
                     >
                       <div className="flex flex-col items-center">
                         <span className="font-semibold text-sm">{option}</span>
                         {showResult && option === currentState.capital && (
-                          <CheckCircle className="w-4 h-4 text-green-600 mt-1" />
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-1 animate-bounce" />
                         )}
                         {showResult && selectedAnswer === option && option !== currentState.capital && (
                           <XCircle className="w-4 h-4 text-red-600 mt-1" />
@@ -346,7 +283,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
 
               {/* Capital Location Map (shown after answer) - More zoomed out with Next button to the right */}
               {showResult && (
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-gray-50 rounded-lg transform transition-all duration-500 animate-in slide-in-from-bottom-4">
                   <div className="flex gap-3">
                     {/* Map on the left */}
                     <div className="flex-1">
@@ -371,7 +308,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                     <div className="flex items-center">
                       <button
                         onClick={handleNext}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center"
                       >
                         Next
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -393,7 +330,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                 </div>
                 <button
                   onClick={resetQuiz}
-                  className="text-xs text-gray-500 hover:text-gray-700 font-semibold"
+                  className="text-xs text-gray-500 hover:text-gray-700 font-semibold transition-colors hover:scale-105 transform duration-200"
                 >
                   Reset
                 </button>
@@ -405,9 +342,9 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                   <span className="text-sm font-medium text-gray-600">Total Score</span>
                   <span className="font-bold text-blue-600">{score}/{answeredQuestions}</span>
                 </div>
-                <div className="bg-gray-200 rounded-full h-2">
+                <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
                   <div 
-                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-700 ease-out"
                     style={{ width: answeredQuestions > 0 ? `${(score / answeredQuestions) * 100}%` : '0%' }}
                   />
                 </div>
@@ -417,14 +354,14 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
               </div>
 
               {/* Round Progress - Compact */}
-              <div className="mb-4 p-2 bg-blue-50 rounded-lg">
+              <div className="mb-4 p-2 bg-blue-50 rounded-lg transform transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-medium text-blue-800">Round {round}</span>
                   <span className="text-sm text-blue-600">{currentStateIndex + 1}/50</span>
                 </div>
-                <div className="bg-blue-200 rounded-full h-2">
+                <div className="bg-blue-200 rounded-full h-2 overflow-hidden">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-700 ease-out"
                     style={{ width: `${((currentStateIndex + 1) / 50) * 100}%` }}
                   />
                 </div>
@@ -439,7 +376,7 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
                 {answerHistory.slice(-8).reverse().map((result, index) => (
                   <div
                     key={answerHistory.length - index}
-                    className={`p-2 rounded-lg border-l-4 ${
+                    className={`p-2 rounded-lg border-l-4 transform transition-all duration-300 hover:scale-[1.02] ${
                       result.correct 
                         ? 'bg-green-50 border-green-400' 
                         : 'bg-red-50 border-red-400'
@@ -474,11 +411,11 @@ const StateCapitals: React.FC<StateCapitalsProps> = ({ onBack, onSaveProgress })
               {/* Stats Summary - Compact */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-green-50 rounded p-2">
+                  <div className="bg-green-50 rounded p-2 transform transition-all duration-300 hover:scale-105">
                     <div className="text-lg font-bold text-green-600">{score}</div>
                     <div className="text-xs text-green-600">Correct</div>
                   </div>
-                  <div className="bg-red-50 rounded p-2">
+                  <div className="bg-red-50 rounded p-2 transform transition-all duration-300 hover:scale-105">
                     <div className="text-lg font-bold text-red-600">{answeredQuestions - score}</div>
                     <div className="text-xs text-red-600">Missed</div>
                   </div>
