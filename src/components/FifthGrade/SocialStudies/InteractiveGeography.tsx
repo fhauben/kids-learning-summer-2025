@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Map, Globe, Mountain, Leaf, Building, RotateCcw, Award } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface InteractiveGeographyProps {
   onBack: () => void;
@@ -190,6 +191,8 @@ const InteractiveGeography: React.FC<InteractiveGeographyProps> = ({ onBack, onS
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [filteredQuestions, setFilteredQuestions] = useState<GeographyQuestion[]>([]);
 
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
+
   useEffect(() => {
     filterQuestions();
   }, [selectedCategory, difficulty]);
@@ -216,35 +219,50 @@ const InteractiveGeography: React.FC<InteractiveGeographyProps> = ({ onBack, onS
   const currentQuestion = filteredQuestions[currentQuestionIndex];
 
   const handleAnswerSelect = (answerIndex: number) => {
+    playClick();
     setSelectedAnswer(answerIndex);
   };
 
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null) return;
-
-    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-    if (isCorrect) {
+    
+    playClick();
+    setShowExplanation(true);
+    
+    if (selectedAnswer === filteredQuestions[currentQuestionIndex].correctAnswer) {
+      playCorrect();
       setScore(score + 1);
       setShowCelebration(true);
+      
+      setTimeout(() => {
+        setShowCelebration(false);
+      }, 3000);
+    } else {
+      playIncorrect();
     }
-
-    setShowExplanation(true);
   };
 
   const handleNextQuestion = () => {
-    setSelectedAnswer(null);
+    playClick();
     setShowExplanation(false);
-
+    setSelectedAnswer(null);
+    
     if (currentQuestionIndex < filteredQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setShowResults(true);
-      onSaveProgress(score, totalQuestions);
+      onSaveProgress(score, filteredQuestions.length);
     }
   };
 
   const handleRestart = () => {
-    filterQuestions();
+    playClick();
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setShowResults(false);
+    setShowCelebration(false);
   };
 
   const getCategoryIcon = (category: string) => {
@@ -512,11 +530,11 @@ const InteractiveGeography: React.FC<InteractiveGeographyProps> = ({ onBack, onS
       </div>
 
       <CelebrationModal
-        show={showCelebration}
+        isOpen={showCelebration}
         onClose={() => setShowCelebration(false)}
-        type="star"
+        score={score}
+        total={filteredQuestions.length}
         message="GEOGRAPHY EXPERT!"
-        subMessage="You know your geography!"
       />
     </div>
   );

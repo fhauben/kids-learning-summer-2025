@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, RotateCcw, Info, Play, CheckCircle, XCircle, Trophy, Shuffle } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface AnglesActivityProps {
   onBack: () => void;
@@ -115,6 +116,8 @@ const AnglesActivity: React.FC<AnglesActivityProps> = ({ onBack, onSaveProgress 
   const [score, setScore] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
 
   const getAngleType = (degrees: number) => {
     if (degrees < 90) return 'acute';
@@ -323,10 +326,12 @@ const AnglesActivity: React.FC<AnglesActivityProps> = ({ onBack, onSaveProgress 
   };
 
   const handleQuizAnswer = (answerIndex: number) => {
+    playClick(); // Play click sound
     setSelectedAnswer(answerIndex);
     setShowResult(true);
     
     if (answerIndex === quizQuestions[currentQuestionIndex].correct) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
       setShowCelebration(true);
       
@@ -334,6 +339,8 @@ const AnglesActivity: React.FC<AnglesActivityProps> = ({ onBack, onSaveProgress 
       setTimeout(() => {
         setShowCelebration(false);
       }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
     
     setTimeout(() => {
@@ -347,6 +354,7 @@ const AnglesActivity: React.FC<AnglesActivityProps> = ({ onBack, onSaveProgress 
   };
 
   const resetQuiz = () => {
+    playClick(); // Play click sound
     setCurrentQuestionIndex(0);
     setScore(0);
     setAnsweredQuestions(0);
@@ -424,11 +432,11 @@ const AnglesActivity: React.FC<AnglesActivityProps> = ({ onBack, onSaveProgress 
       </button>
 
       <CelebrationModal 
-        show={showCelebration} 
+        isOpen={showCelebration} 
         onClose={() => setShowCelebration(false)}
-        type="star"
+        score={score}
+        total={quizQuestions.length}
         message="Geometry Genius!"
-        subMessage="Perfect Answer!"
       />
 
       <div className="bg-white rounded-xl shadow-lg p-8">

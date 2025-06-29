@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calculator, RotateCcw, Target, TrendingUp, Award, CheckCircle, XCircle } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface MathProblemGeneratorProps {
   onBack: () => void;
@@ -29,6 +30,8 @@ const MathProblemGenerator: React.FC<MathProblemGeneratorProps> = ({ onBack, onS
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [showResults, setShowResults] = useState(false);
   const [problems, setProblems] = useState<MathProblem[]>([]);
+
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
 
   const generateProblems = () => {
     const newProblems: MathProblem[] = [];
@@ -235,36 +238,45 @@ const MathProblemGenerator: React.FC<MathProblemGeneratorProps> = ({ onBack, onS
   };
 
   const handleSubmit = () => {
-    if (!currentProblem || !userAnswer) return;
-
-    const userAnswerNum = parseFloat(userAnswer);
-    const correct = Math.abs(userAnswerNum - currentProblem.answer) < 0.01; // Allow for small decimal differences
-
+    if (!currentProblem || !userAnswer.trim()) return;
+    
+    playClick(); // Play click sound
+    const answer = parseFloat(userAnswer);
+    const correct = Math.abs(answer - currentProblem.answer) < 0.01;
+    
     setIsCorrect(correct);
+    setShowExplanation(true);
+    
     if (correct) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
       setShowCelebration(true);
+      
+      setTimeout(() => {
+        setShowCelebration(false);
+      }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
-
-    setShowExplanation(true);
   };
 
   const handleNext = () => {
-    setUserAnswer('');
+    playClick(); // Play click sound
     setShowExplanation(false);
+    setUserAnswer('');
     setIsCorrect(false);
-
+    
     if (currentProblemIndex < problems.length - 1) {
-      const nextIndex = currentProblemIndex + 1;
-      setCurrentProblemIndex(nextIndex);
-      setCurrentProblem(problems[nextIndex]);
+      setCurrentProblemIndex(currentProblemIndex + 1);
+      setCurrentProblem(problems[currentProblemIndex + 1]);
     } else {
       setShowResults(true);
-      onSaveProgress(score, totalProblems);
+      onSaveProgress(score, problems.length);
     }
   };
 
   const handleRestart = () => {
+    playClick(); // Play click sound
     generateProblems();
   };
 
@@ -552,11 +564,11 @@ const MathProblemGenerator: React.FC<MathProblemGeneratorProps> = ({ onBack, onS
       </div>
 
       <CelebrationModal
-        show={showCelebration}
+        isOpen={showCelebration}
         onClose={() => setShowCelebration(false)}
-        type="star"
+        score={score}
+        total={problems.length}
         message="CORRECT!"
-        subMessage="Great math skills!"
       />
     </div>
   );

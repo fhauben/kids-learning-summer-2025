@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { longDivisionProblems } from '../../../data/mathProblems';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface LongDivisionProps {
   onBack: () => void;
@@ -71,13 +72,17 @@ const LongDivision: React.FC<LongDivisionProps> = ({ onBack, onSaveProgress }) =
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [showAnimation, setShowAnimation] = useState(false);
 
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
+
   const currentProblem = shuffledProblems[currentProblemIndex];
 
   const handleAnswer = (answer: number) => {
+    playClick(); // Play click sound
     setSelectedAnswer(answer);
     setShowResult(true);
     
     if (answer === currentProblem.answer) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
       setShowAnimation(true);
       
@@ -85,6 +90,8 @@ const LongDivision: React.FC<LongDivisionProps> = ({ onBack, onSaveProgress }) =
       setTimeout(() => {
         setShowAnimation(false);
       }, 2500);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
     
     setTimeout(() => {
@@ -98,6 +105,7 @@ const LongDivision: React.FC<LongDivisionProps> = ({ onBack, onSaveProgress }) =
   };
 
   const resetQuiz = () => {
+    playClick(); // Play click sound
     setCurrentProblemIndex(0);
     setScore(0);
     setAnsweredQuestions(0);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Clock, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { clockTimes } from '../../../data/mathProblems';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface AnalogClockProps {
   onBack: () => void;
@@ -99,6 +100,8 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ onBack, onSaveProgress }) => 
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
+
   const currentTime = shuffledClockTimes[currentTimeIndex];
   const wrongAnswers = shuffledClockTimes
     .filter(time => time.display !== currentTime.display)
@@ -169,10 +172,12 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ onBack, onSaveProgress }) => 
   };
 
   const handleAnswer = (answer: string) => {
+    playClick(); // Play click sound
     setSelectedAnswer(answer);
     setShowResult(true);
     
     if (answer === currentTime.display) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
       setShowSuccessModal(true);
       
@@ -180,6 +185,8 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ onBack, onSaveProgress }) => 
       setTimeout(() => {
         setShowSuccessModal(false);
       }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
     
     setTimeout(() => {
@@ -193,6 +200,7 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ onBack, onSaveProgress }) => 
   };
 
   const resetQuiz = () => {
+    playClick(); // Play click sound
     setCurrentTimeIndex(0);
     setScore(0);
     setAnsweredQuestions(0);

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calculator, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { additionProblems, subtractionProblems } from '../../../data/mathProblems';
 import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface AdditionSubtractionProps {
   onBack: () => void;
@@ -27,13 +28,17 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
+
   const currentProblem = allProblems[currentProblemIndex];
 
   const handleAnswer = (answer: number) => {
+    playClick(); // Play click sound
     setSelectedAnswer(answer);
     setShowResult(true);
     
     if (answer === currentProblem.answer) {
+      playCorrect(); // Play correct sound
       setScore(score + 1);
       setShowCelebration(true);
       
@@ -41,6 +46,8 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
       setTimeout(() => {
         setShowCelebration(false);
       }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
     }
     
     setTimeout(() => {
@@ -54,6 +61,7 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
   };
 
   const resetQuiz = () => {
+    playClick(); // Play click sound
     setCurrentProblemIndex(0);
     setScore(0);
     setAnsweredQuestions(0);
@@ -114,11 +122,11 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
       </button>
 
       <CelebrationModal 
-        show={showCelebration} 
+        isOpen={showCelebration} 
         onClose={() => setShowCelebration(false)}
-        type="rocket"
+        score={score}
+        total={allProblems.length}
         message="Math Genius!"
-        subMessage="Perfect Calculation!"
       />
 
       <div className="bg-white rounded-xl shadow-lg p-8">

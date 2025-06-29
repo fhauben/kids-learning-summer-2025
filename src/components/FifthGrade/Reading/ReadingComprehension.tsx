@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, BookOpen, CheckCircle, XCircle, RotateCcw, Award } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
 interface ReadingComprehensionProps {
   onBack: () => void;
@@ -185,6 +186,8 @@ const ReadingComprehension: React.FC<ReadingComprehensionProps> = ({ onBack, onS
   const [completedPassages, setCompletedPassages] = useState<Set<string>>(new Set());
   const [showResults, setShowResults] = useState(false);
 
+  const { playCorrect, playIncorrect, playClick } = useSoundEffects();
+
   const currentPassage = passages[currentPassageIndex];
   const currentQuestion = currentPassage?.questions[currentQuestionIndex];
 
@@ -195,6 +198,7 @@ const ReadingComprehension: React.FC<ReadingComprehensionProps> = ({ onBack, onS
   }, []);
 
   const handleAnswerSelect = (answerIndex: number) => {
+    playClick(); // Play click sound
     setSelectedAnswer(answerIndex);
   };
 
@@ -210,17 +214,30 @@ const ReadingComprehension: React.FC<ReadingComprehensionProps> = ({ onBack, onS
   };
 
   const handleNextQuestion = () => {
-    setSelectedAnswer(null);
+    playClick(); // Play click sound
+    
+    if (selectedAnswer === currentQuestion?.correctAnswer) {
+      playCorrect(); // Play correct sound
+      setScore(score + 1);
+      setShowCelebration(true);
+      
+      setTimeout(() => {
+        setShowCelebration(false);
+      }, 3000);
+    } else {
+      playIncorrect(); // Play incorrect sound
+    }
+
     setShowExplanation(false);
+    setSelectedAnswer(null);
 
     if (currentQuestionIndex < currentPassage.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // Passage completed
-      setCompletedPassages(prev => new Set([...prev, currentPassage.id]));
+      // Completed this passage
+      setCompletedPassages(new Set([...completedPassages, currentPassage.id]));
       
       if (currentPassageIndex < passages.length - 1) {
-        // Move to next passage
         setCurrentPassageIndex(currentPassageIndex + 1);
         setCurrentQuestionIndex(0);
       } else {
@@ -232,6 +249,7 @@ const ReadingComprehension: React.FC<ReadingComprehensionProps> = ({ onBack, onS
   };
 
   const handleRestart = () => {
+    playClick(); // Play click sound
     setCurrentPassageIndex(0);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
@@ -453,11 +471,11 @@ const ReadingComprehension: React.FC<ReadingComprehensionProps> = ({ onBack, onS
       </div>
 
       <CelebrationModal
-        show={showCelebration}
+        isOpen={showCelebration}
         onClose={() => setShowCelebration(false)}
-        type="star"
+        score={score}
+        total={totalQuestions}
         message="EXCELLENT READING!"
-        subMessage="You're becoming a reading expert!"
       />
     </div>
   );
