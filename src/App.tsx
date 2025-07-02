@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target } from 'lucide-react';
+import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target, Keyboard } from 'lucide-react';
 import { GradeLevel } from './types';
 import { useProgress } from './hooks/useProgress';
 
@@ -29,6 +29,7 @@ import AdditionSubtraction from './components/ThirdGrade/Math/AdditionSubtractio
 import AnalogClock from './components/ThirdGrade/Math/AnalogClock';
 import MultiplicationTables from './components/ThirdGrade/Math/MultiplicationTables';
 import AnglesActivity from './components/ThirdGrade/Math/AnglesActivity';
+import TypingPractice from './components/ThirdGrade/Typing/TypingPractice';
 
 type CurrentView = 
   | 'home'
@@ -51,7 +52,8 @@ type CurrentView =
   | 'addition-subtraction'
   | 'analog-clock'
   | 'multiplication-tables'
-  | 'angles-activity';
+  | 'angles-activity'
+  | 'typing-practice';
 
 function App() {
   const [currentStudent, setCurrentStudent] = useState<string | null>(null);
@@ -399,6 +401,13 @@ function App() {
           color="border-l-purple-500"
           onClick={() => setCurrentView('math')}
         />
+        <SubjectCard
+          title="Typing"
+          description="Learn to type with structured lessons and progress tracking"
+          icon={Keyboard}
+          color="border-l-indigo-500"
+          onClick={() => setCurrentView('typing-practice')}
+        />
       </div>
     );
   };
@@ -495,6 +504,13 @@ function App() {
           <AnglesActivity 
             onBack={() => setCurrentView('math')} 
             onSaveProgress={createProgressHandler('math', 'Angles & Shapes')}
+          />
+        );
+      case 'typing-practice':
+        return (
+          <TypingPractice 
+            onBack={() => setCurrentView('home')} 
+            onSaveProgress={createProgressHandler('reading', 'Typing Practice')}
           />
         );
       default:
