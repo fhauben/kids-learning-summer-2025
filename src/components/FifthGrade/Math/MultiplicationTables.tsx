@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, ArrowLeft, Star, Sparkles, CheckCircle, XCircle } from 'lucide-react';
+import { Calculator, ArrowLeft, Star, Sparkles } from 'lucide-react';
 import CelebrationModal from '../../shared/CelebrationModal';
 
 interface MultiplicationTablesProps {
@@ -11,7 +11,6 @@ interface Problem {
   num1: number;
   num2: number;
   answer: number;
-  options: number[];
 }
 
 // Utility function to shuffle arrays
@@ -24,42 +23,15 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
-// Generate multiple choice options for a given answer
-const generateOptions = (answer: number): number[] => {
-  const options = [answer];
-  
-  // Add related options based on the factors
-  const factor1 = Math.floor(answer / 2);
-  const factor2 = Math.floor(answer / 3);
-  const factor3 = answer + Math.floor(Math.random() * 10) + 1;
-  const factor4 = Math.max(1, answer - Math.floor(Math.random() * 10) - 1);
-  
-  options.push(factor1, factor2, factor3, factor4);
-  
-  // Remove duplicates and ensure we have exactly 4 options
-  const uniqueOptions = [...new Set(options)];
-  while (uniqueOptions.length < 4) {
-    const randomOption = Math.floor(Math.random() * (answer * 2)) + 1;
-    if (!uniqueOptions.includes(randomOption)) {
-      uniqueOptions.push(randomOption);
-    }
-  }
-  
-  // Shuffle and return exactly 4 options
-  return shuffleArray(uniqueOptions).slice(0, 4);
-};
-
 // Generate all multiplication problems from 1x1 to 12x12
 const generateAllMultiplicationProblems = (): Problem[] => {
   const problems: Problem[] = [];
   for (let i = 1; i <= 12; i++) {
     for (let j = 1; j <= 12; j++) {
-      const answer = i * j;
       problems.push({
         num1: i,
         num2: j,
-        answer: answer,
-        options: generateOptions(answer)
+        answer: i * j
       });
     }
   }
@@ -70,7 +42,7 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
   const [allProblems] = useState(() => shuffleArray(generateAllMultiplicationProblems()));
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
   const [currentProblem, setCurrentProblem] = useState<Problem>(allProblems[0]);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [userAnswer, setUserAnswer] = useState('');
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [showResult, setShowResult] = useState(false);
@@ -90,11 +62,12 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
     setCurrentProblem(allProblems[0]);
   }, [allProblems]);
 
-  const handleAnswer = (answer: number) => {
-    if (showResult) return;
-    
-    setSelectedAnswer(answer);
-    const correct = answer === currentProblem.answer;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (userAnswer.trim() === '') return;
+
+    const userNum = parseInt(userAnswer);
+    const correct = userNum === currentProblem.answer;
     
     setIsCorrect(correct);
     setShowResult(true);
@@ -123,7 +96,7 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
     // Move to next problem after 2.5 seconds
     setTimeout(() => {
       setShowResult(false);
-      setSelectedAnswer(null);
+      setUserAnswer('');
       generateNewProblem();
     }, 2500);
   };
@@ -133,7 +106,7 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
     setTotalQuestions(0);
     setStreak(0);
     setShowResult(false);
-    setSelectedAnswer(null);
+    setUserAnswer('');
     setCurrentProblemIndex(0);
     setCurrentProblem(allProblems[0]);
     setHasCompletedSession(false);
@@ -164,7 +137,7 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <Calculator className="w-8 h-8 text-blue-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-800">Multiplication Tables</h2>
+            <h2 className="text-2xl font-bold text-gray-800">5th Grade Multiplication Tables</h2>
           </div>
           <div className="text-right">
             <button
@@ -210,36 +183,24 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
               {currentProblem.num1} × {currentProblem.num2} = ?
             </div>
             
-            <p className="text-gray-600 mb-6">Choose the correct answer:</p>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {currentProblem.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => !showResult && handleAnswer(option)}
-                  disabled={showResult}
-                  className={`p-6 rounded-lg border-2 transition-all ${
-                    showResult
-                      ? option === currentProblem.answer
-                        ? 'bg-green-100 border-green-500 text-green-800'
-                        : selectedAnswer === option
-                        ? 'bg-red-100 border-red-500 text-red-800'
-                        : 'bg-gray-100 border-gray-300 text-gray-500'
-                      : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">{option}</span>
-                    {showResult && option === currentProblem.answer && (
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                    )}
-                    {showResult && selectedAnswer === option && option !== currentProblem.answer && (
-                      <XCircle className="w-6 h-6 text-red-600" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+            <form onSubmit={handleSubmit} className="flex justify-center items-center space-x-4">
+              <input
+                type="number"
+                value={userAnswer}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                className="text-3xl font-bold text-center w-32 p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                placeholder="?"
+                disabled={showResult}
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={showResult || userAnswer.trim() === ''}
+                className="bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Check
+              </button>
+            </form>
           </div>
 
           {/* Result */}
@@ -286,13 +247,14 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
 
         {/* Tips */}
         <div className="bg-yellow-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-yellow-800 mb-2">💡 Multiplication Tips</h3>
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">💡 5th Grade Multiplication Tips</h3>
           <ul className="text-yellow-700 space-y-1 text-sm">
             <li>• Remember: 5 × anything ends in 0 or 5</li>
             <li>• For 9s: The digits always add up to 9 (9×2=18, 1+8=9)</li>
             <li>• Doubles are easier: 6×6, 7×7, 8×8</li>
             <li>• Practice the harder ones: 6×7, 6×8, 7×8, 8×9</li>
             <li>• All 144 problems (1×1 through 12×12) appear randomly!</li>
+            <li>• Use mental math strategies to solve quickly</li>
           </ul>
         </div>
       </div>
@@ -300,4 +262,4 @@ const MultiplicationTables: React.FC<MultiplicationTablesProps> = ({ onBack, onS
   );
 };
 
-export default MultiplicationTables;
+export default MultiplicationTables; 

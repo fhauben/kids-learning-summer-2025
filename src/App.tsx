@@ -21,6 +21,7 @@ import AmericanHistory from './components/FifthGrade/SocialStudies/AmericanHisto
 import InteractiveGeography from './components/FifthGrade/SocialStudies/InteractiveGeography';
 import LongDivision from './components/FifthGrade/Math/LongDivision';
 import MathProblemGenerator from './components/FifthGrade/Math/MathProblemGenerator';
+import FifthGradeMultiplicationTables from './components/FifthGrade/Math/MultiplicationTables';
 
 // 3rd Grade Components
 import TextRetelling from './components/ThirdGrade/Reading/TextRetelling';
@@ -45,6 +46,7 @@ type CurrentView =
   | 'interactive-geography'
   | 'long-division'
   | 'math-problem-generator'
+  | 'fifth-grade-multiplication-tables'
   | 'text-retelling'
   | 'addition-subtraction'
   | 'analog-clock'
@@ -113,7 +115,7 @@ function App() {
               ← Back to Learning
             </button>
           </header>
-          <LearningPath />
+          <LearningPath onNavigate={setCurrentView} />
         </div>
       </div>
     );
@@ -234,6 +236,13 @@ function App() {
               icon={Calculator}
               color="border-l-blue-500"
               onClick={() => setCurrentView('math-problem-generator')}
+            />
+            <ActivityCard
+              title="Multiplication Tables"
+              description="Master times tables up to 12 with text entry practice"
+              icon={Calculator}
+              color="border-l-green-500"
+              onClick={() => setCurrentView('fifth-grade-multiplication-tables')}
             />
           </div>
         </div>
@@ -444,6 +453,13 @@ function App() {
           <MathProblemGenerator 
             onBack={() => setCurrentView('math')} 
             onSaveProgress={createProgressHandler('math', 'Math Problem Generator')}
+          />
+        );
+      case 'fifth-grade-multiplication-tables':
+        return (
+          <FifthGradeMultiplicationTables 
+            onBack={() => setCurrentView('math')} 
+            onSaveProgress={createProgressHandler('math', 'Multiplication Tables')}
           />
         );
       case 'text-retelling':

@@ -25,7 +25,11 @@ interface LearningPath {
   completedSteps: number;
 }
 
-const LearningPath: React.FC = () => {
+interface LearningPathProps {
+  onNavigate: (view: 'addition-subtraction' | 'multiplication-tables' | 'analog-clock' | 'angles-activity' | 'dictionary-thesaurus' | 'reading-comprehension' | 'text-retelling' | 'state-capitals' | 'american-history' | 'interactive-geography') => void;
+}
+
+const LearningPath: React.FC<LearningPathProps> = ({ onNavigate }) => {
   const { getProgress } = useProgress();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
@@ -237,8 +241,33 @@ const LearningPath: React.FC = () => {
   };
 
   const handleStartStep = (pathId: string, stepId: string) => {
-    // This would navigate to the actual activity
-    console.log(`Starting step ${stepId} in path ${pathId}`);
+    // Map step IDs to actual app views
+    const stepToViewMap: { [key: string]: 'addition-subtraction' | 'multiplication-tables' | 'analog-clock' | 'angles-activity' | 'dictionary-thesaurus' | 'reading-comprehension' | 'text-retelling' | 'state-capitals' | 'american-history' | 'interactive-geography' } = {
+      // Math Foundations path
+      'addition-basics': 'addition-subtraction',
+      'subtraction-basics': 'addition-subtraction',
+      'multiplication-intro': 'multiplication-tables',
+      'time-telling': 'analog-clock',
+      'angles-geometry': 'angles-activity',
+      
+      // Reading Comprehension path
+      'vocabulary-building': 'dictionary-thesaurus',
+      'reading-passages': 'reading-comprehension',
+      'comprehension-questions': 'reading-comprehension',
+      'text-analysis': 'text-retelling',
+      
+      // US Geography path
+      'state-capitals': 'state-capitals',
+      'american-history': 'american-history',
+      'interactive-geography': 'interactive-geography'
+    };
+    
+    const targetView = stepToViewMap[stepId];
+    if (targetView) {
+      onNavigate(targetView);
+    } else {
+      console.log(`No navigation mapping found for step ${stepId}`);
+    }
   };
 
   return (

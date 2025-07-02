@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calculator, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
-import { additionProblems, subtractionProblems } from '../../../data/mathProblems';
+import { additionProblems, subtractionProblems, multiplicationProblems } from '../../../data/mathProblems';
 import CelebrationModal from '../../shared/CelebrationModal';
 import { useSoundEffects } from '../../../hooks/useSoundEffects';
 
@@ -19,8 +19,31 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
+// Utility to render vertical addition/subtraction
+function renderVerticalMath(question: string, type: string) {
+  const match = question.match(/(\d+)\s*([+-])\s*(\d+)/);
+  if (!match) return <span className="text-4xl font-bold">{question}</span>;
+  const [, num1, op, num2] = match;
+  const maxLen = Math.max(num1.length, num2.length);
+  const pad = (n: string) => n.padStart(maxLen, ' ');
+  const lines = [
+    '  ' + pad(num1),
+    op + ' ' + pad(num2),
+    '-'.repeat(maxLen + 2)
+  ];
+  return (
+    <pre className="text-4xl font-mono text-center leading-tight mb-2">
+      {lines.join('\n')}
+    </pre>
+  );
+}
+
 const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSaveProgress }) => {
-  const [allProblems] = useState(() => shuffleArray([...additionProblems, ...subtractionProblems]));
+  const [allProblems] = useState(() => shuffleArray([
+    ...additionProblems,
+    ...subtractionProblems,
+    ...multiplicationProblems
+  ]));
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -97,7 +120,7 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
               Accuracy: {Math.round((score / allProblems.length) * 100)}%
             </div>
             <div className="text-sm text-gray-600 mt-2">
-              You solved {additionProblems.length} addition and {subtractionProblems.length} subtraction problems!
+              You solved {additionProblems.length} addition, {subtractionProblems.length} subtraction, and {multiplicationProblems.length} multiplication problems!
             </div>
           </div>
           <button
@@ -133,7 +156,7 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center">
             <Calculator className="w-8 h-8 text-blue-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-800">Addition & Subtraction</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Addition, Subtraction & Multiplication</h2>
           </div>
           <div className="text-sm text-gray-600">
             Problem {currentProblemIndex + 1} of {allProblems.length}
@@ -142,27 +165,41 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
 
         <div className="text-center mb-8">
           <div className={`rounded-lg p-8 mb-6 ${
-            currentProblem.type === 'addition' ? 'bg-green-50' : 'bg-red-50'
+            currentProblem.type === 'addition' ? 'bg-green-50' : currentProblem.type === 'subtraction' ? 'bg-red-50' : 'bg-blue-50'
           }`}>
             <div className="flex items-center justify-center mb-4">
               <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                currentProblem.type === 'addition' 
-                  ? 'bg-green-200 text-green-800' 
-                  : 'bg-red-200 text-red-800'
+                currentProblem.type === 'addition'
+                  ? 'bg-green-200 text-green-800'
+                  : currentProblem.type === 'subtraction'
+                  ? 'bg-red-200 text-red-800'
+                  : 'bg-blue-200 text-blue-800'
               }`}>
-                {currentProblem.type === 'addition' ? 'Addition' : 'Subtraction'}
+                {currentProblem.type === 'addition'
+                  ? 'Addition'
+                  : currentProblem.type === 'subtraction'
+                  ? 'Subtraction'
+                  : 'Multiplication'}
               </span>
             </div>
             <h3 className={`text-4xl font-bold mb-4 ${
-              currentProblem.type === 'addition' ? 'text-green-800' : 'text-red-800'
+              currentProblem.type === 'addition'
+                ? 'text-green-800'
+                : currentProblem.type === 'subtraction'
+                ? 'text-red-800'
+                : 'text-blue-800'
             }`}>
-              {currentProblem.question}
+              {(currentProblem.type === 'addition' || currentProblem.type === 'subtraction')
+                ? renderVerticalMath(currentProblem.question, currentProblem.type)
+                : currentProblem.question}
             </h3>
+
             <p className="text-gray-600">Choose the correct answer:</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {currentProblem.options!.map((option, index) => (
+          {currentProblem.options && currentProblem.options.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {currentProblem.options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => !showResult && handleAnswer(option)}
@@ -188,7 +225,12 @@ const AdditionSubtraction: React.FC<AdditionSubtractionProps> = ({ onBack, onSav
                 </div>
               </button>
             ))}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center text-red-600 p-4">
+              No options available for this problem
+            </div>
+          )}
         </div>
 
         {/* Progress indicator */}

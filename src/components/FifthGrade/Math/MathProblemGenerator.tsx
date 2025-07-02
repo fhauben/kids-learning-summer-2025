@@ -301,6 +301,25 @@ const MathProblemGenerator: React.FC<MathProblemGeneratorProps> = ({ onBack, onS
     }
   };
 
+  // Utility to render vertical addition/subtraction
+  function renderVerticalMath(question: string, category: string) {
+    const match = question.match(/(\d+)\s*([+-])\s*(\d+)/);
+    if (!match) return <span className="text-3xl font-bold">{question}</span>;
+    const [, num1, op, num2] = match;
+    const maxLen = Math.max(num1.length, num2.length);
+    const pad = (n: string) => n.padStart(maxLen, ' ');
+    const lines = [
+      '  ' + pad(num1),
+      op + ' ' + pad(num2),
+      '-'.repeat(maxLen + 2)
+    ];
+    return (
+      <pre className="text-3xl font-mono text-center leading-tight mb-2">
+        {lines.join('\n')}
+      </pre>
+    );
+  }
+
   useEffect(() => {
     generateProblems();
   }, []);
