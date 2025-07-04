@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target, Keyboard } from 'lucide-react';
+import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target, Keyboard, Zap } from 'lucide-react';
 import { GradeLevel } from './types';
 import { useProgress } from './hooks/useProgress';
 
@@ -22,6 +22,7 @@ import InteractiveGeography from './components/FifthGrade/SocialStudies/Interact
 import LongDivision from './components/FifthGrade/Math/LongDivision';
 import MathProblemGenerator from './components/FifthGrade/Math/MathProblemGenerator';
 import FifthGradeMultiplicationTables from './components/FifthGrade/Math/MultiplicationTables';
+import SimpleMachines from './components/FifthGrade/Science/SimpleMachines';
 
 // 3rd Grade Components
 import TextRetelling from './components/ThirdGrade/Reading/TextRetelling';
@@ -30,12 +31,15 @@ import AnalogClock from './components/ThirdGrade/Math/AnalogClock';
 import MultiplicationTables from './components/ThirdGrade/Math/MultiplicationTables';
 import AnglesActivity from './components/ThirdGrade/Math/AnglesActivity';
 import TypingPractice from './components/ThirdGrade/Typing/TypingPractice';
+import StatesOfMatter from './components/ThirdGrade/Science/StatesOfMatter';
+import AnimalHabitats from './components/ThirdGrade/Science/AnimalHabitats';
 
 type CurrentView = 
   | 'home'
   | 'reading'
   | 'math'
   | 'social-studies'
+  | 'science'
   | 'progress'
   | 'daily-challenges'
   | 'learning-paths'
@@ -48,12 +52,15 @@ type CurrentView =
   | 'long-division'
   | 'math-problem-generator'
   | 'fifth-grade-multiplication-tables'
+  | 'simple-machines'
   | 'text-retelling'
   | 'addition-subtraction'
   | 'analog-clock'
   | 'multiplication-tables'
   | 'angles-activity'
-  | 'typing-practice';
+  | 'typing-practice'
+  | 'states-of-matter'
+  | 'animal-habitats';
 
 function App() {
   const [currentStudent, setCurrentStudent] = useState<string | null>(null);
@@ -251,6 +258,29 @@ function App() {
       );
     }
 
+    if (currentView === 'science') {
+      return (
+        <div className="space-y-6">
+          <button
+            onClick={() => setCurrentView('home')}
+            className="text-blue-600 hover:text-blue-800 font-semibold mb-4"
+          >
+            ← Back to Subjects
+          </button>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">5th Grade Science</h2>
+          <div className="grid gap-6">
+            <ActivityCard
+              title="Simple Machines & Levers"
+              description="Explore levers, mechanical advantage, and physics experiments"
+              icon={Zap}
+              color="border-l-orange-500"
+              onClick={() => setCurrentView('simple-machines')}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <h2 className="col-span-full text-3xl font-bold text-gray-800 mb-2">5th Grade Learning</h2>
@@ -274,6 +304,13 @@ function App() {
           icon={Calculator}
           color="border-l-purple-500"
           onClick={() => setCurrentView('math')}
+        />
+        <SubjectCard
+          title="Science"
+          description="Simple machines, levers, and physics experiments"
+          icon={Zap}
+          color="border-l-orange-500"
+          onClick={() => setCurrentView('science')}
         />
       </div>
     );
@@ -377,6 +414,36 @@ function App() {
       );
     }
 
+    if (currentView === 'science') {
+      return (
+        <div className="space-y-6">
+          <button
+            onClick={() => setCurrentView('home')}
+            className="text-blue-600 hover:text-blue-800 font-semibold mb-4"
+          >
+            ← Back to Subjects
+          </button>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">3rd Grade Science</h2>
+          <div className="grid gap-6">
+            <ActivityCard
+              title="States of Matter"
+              description="Explore solids, liquids, and gases with interactive particle simulator"
+              icon={Zap}
+              color="border-l-purple-500"
+              onClick={() => setCurrentView('states-of-matter')}
+            />
+            <ActivityCard
+              title="Animal Habitats"
+              description="Explore different ecosystems and learn about animal adaptations"
+              icon={Globe}
+              color="border-l-green-500"
+              onClick={() => setCurrentView('animal-habitats')}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <h2 className="col-span-full text-3xl font-bold text-gray-800 mb-2">3rd Grade Learning</h2>
@@ -407,6 +474,13 @@ function App() {
           icon={Keyboard}
           color="border-l-indigo-500"
           onClick={() => setCurrentView('typing-practice')}
+        />
+        <SubjectCard
+          title="Science"
+          description="Explore states of matter, simple machines, and animal habitats"
+          icon={Zap}
+          color="border-l-yellow-500"
+          onClick={() => setCurrentView('science')}
         />
       </div>
     );
@@ -471,6 +545,13 @@ function App() {
             onSaveProgress={createProgressHandler('math', 'Multiplication Tables')}
           />
         );
+      case 'simple-machines':
+        return (
+          <SimpleMachines 
+            onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'Simple Machines & Levers')}
+          />
+        );
       case 'text-retelling':
         return (
           <TextRetelling 
@@ -511,6 +592,20 @@ function App() {
           <TypingPractice 
             onBack={() => setCurrentView('home')} 
             onSaveProgress={createProgressHandler('reading', 'Typing Practice')}
+          />
+        );
+      case 'states-of-matter':
+        return (
+          <StatesOfMatter 
+            onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'States of Matter')}
+          />
+        );
+      case 'animal-habitats':
+        return (
+          <AnimalHabitats 
+            onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'Animal Habitats')}
           />
         );
       default:

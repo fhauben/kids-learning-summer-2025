@@ -66,25 +66,25 @@ const multiplicationProblemsBase: MathProblem[] = [
 // Expanded Addition Problems (20 problems)
 const additionProblemsBase: MathProblem[] = [
   { id: '1', question: '45 + 37', answer: 82, type: 'addition', options: [82, 80, 84, 78] },
-  { id: '2', question: '156 + 247', answer: 403, type: 'addition', options: [403, 401, 405, 399] },
+  { id: '2', question: '56 + 27', answer: 83, type: 'addition', options: [83, 81, 85, 79] },
   { id: '3', question: '89 + 56', answer: 145, type: 'addition', options: [145, 143, 147, 141] },
-  { id: '4', question: '234 + 189', answer: 423, type: 'addition', options: [423, 421, 425, 419] },
+  { id: '4', question: '34 + 19', answer: 53, type: 'addition', options: [53, 51, 55, 49] },
   { id: '5', question: '67 + 48', answer: 115, type: 'addition', options: [115, 113, 117, 111] },
-  { id: '6', question: '123 + 456', answer: 579, type: 'addition', options: [579, 577, 581, 575] },
+  { id: '6', question: '78 + 24', answer: 102, type: 'addition', options: [102, 100, 104, 98] },
   { id: '7', question: '78 + 94', answer: 172, type: 'addition', options: [172, 170, 174, 168] },
-  { id: '8', question: '345 + 267', answer: 612, type: 'addition', options: [612, 610, 614, 608] },
+  { id: '8', question: '35 + 27', answer: 62, type: 'addition', options: [62, 60, 64, 58] },
   { id: '9', question: '59 + 73', answer: 132, type: 'addition', options: [132, 130, 134, 128] },
-  { id: '10', question: '198 + 356', answer: 554, type: 'addition', options: [554, 552, 556, 550] },
+  { id: '10', question: '48 + 36', answer: 84, type: 'addition', options: [84, 82, 86, 80] },
   { id: '11', question: '84 + 67', answer: 151, type: 'addition', options: [151, 149, 153, 147] },
-  { id: '12', question: '276 + 189', answer: 465, type: 'addition', options: [465, 463, 467, 461] },
+  { id: '12', question: '76 + 29', answer: 105, type: 'addition', options: [105, 103, 107, 101] },
   { id: '13', question: '93 + 58', answer: 151, type: 'addition', options: [151, 149, 153, 147] },
-  { id: '14', question: '167 + 234', answer: 401, type: 'addition', options: [401, 399, 403, 397] },
+  { id: '14', question: '67 + 24', answer: 91, type: 'addition', options: [91, 89, 93, 87] },
   { id: '15', question: '76 + 85', answer: 161, type: 'addition', options: [161, 159, 163, 157] },
-  { id: '16', question: '298 + 147', answer: 445, type: 'addition', options: [445, 443, 447, 441] },
+  { id: '16', question: '58 + 47', answer: 105, type: 'addition', options: [105, 103, 107, 101] },
   { id: '17', question: '65 + 79', answer: 144, type: 'addition', options: [144, 142, 146, 140] },
-  { id: '18', question: '356 + 278', answer: 634, type: 'addition', options: [634, 632, 636, 630] },
+  { id: '18', question: '36 + 28', answer: 64, type: 'addition', options: [64, 62, 66, 60] },
   { id: '19', question: '87 + 96', answer: 183, type: 'addition', options: [183, 181, 185, 179] },
-  { id: '20', question: '245 + 367', answer: 612, type: 'addition', options: [612, 610, 614, 608] }
+  { id: '20', question: '45 + 67', answer: 112, type: 'addition', options: [112, 110, 114, 108] }
 ];
 
 // Expanded Subtraction Problems (20 problems)
