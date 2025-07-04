@@ -23,6 +23,7 @@ import LongDivision from './components/FifthGrade/Math/LongDivision';
 import MathProblemGenerator from './components/FifthGrade/Math/MathProblemGenerator';
 import FifthGradeMultiplicationTables from './components/FifthGrade/Math/MultiplicationTables';
 import SimpleMachines from './components/FifthGrade/Science/SimpleMachines';
+import ElectricityCircuits from './components/FifthGrade/Science/ElectricityCircuits';
 
 // 3rd Grade Components
 import TextRetelling from './components/ThirdGrade/Reading/TextRetelling';
@@ -53,6 +54,7 @@ type CurrentView =
   | 'math-problem-generator'
   | 'fifth-grade-multiplication-tables'
   | 'simple-machines'
+  | 'electricity-circuits'
   | 'text-retelling'
   | 'addition-subtraction'
   | 'analog-clock'
@@ -275,6 +277,13 @@ function App() {
               icon={Zap}
               color="border-l-orange-500"
               onClick={() => setCurrentView('simple-machines')}
+            />
+            <ActivityCard
+              title="Electricity & Circuits"
+              description="Build circuits, learn about conductors, and electrical safety"
+              icon={Zap}
+              color="border-l-yellow-500"
+              onClick={() => setCurrentView('electricity-circuits')}
             />
           </div>
         </div>
@@ -550,6 +559,13 @@ function App() {
           <SimpleMachines 
             onBack={() => setCurrentView('science')} 
             onSaveProgress={createProgressHandler('science', 'Simple Machines & Levers')}
+          />
+        );
+      case 'electricity-circuits':
+        return (
+          <ElectricityCircuits 
+            onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'Electricity & Circuits')}
           />
         );
       case 'text-retelling':
