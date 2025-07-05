@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target, Keyboard, Zap } from 'lucide-react';
+import { BookOpen, Calculator, Globe, User, BarChart3, LogOut, Trophy, Map, Calendar, Target, Keyboard, Zap, Flag } from 'lucide-react';
 import { GradeLevel } from './types';
 import { useProgress } from './hooks/useProgress';
 
@@ -19,6 +19,10 @@ import ReadingComprehension from './components/FifthGrade/Reading/ReadingCompreh
 import StateCapitals from './components/FifthGrade/SocialStudies/StateCapitals';
 import AmericanHistory from './components/FifthGrade/SocialStudies/AmericanHistory';
 import InteractiveGeography from './components/FifthGrade/SocialStudies/InteractiveGeography';
+import AmericanIndependence from './components/FifthGrade/SocialStudies/AmericanIndependence';
+import FourthOfJuly from './components/FifthGrade/SocialStudies/FourthOfJuly';
+import DeclarationOfIndependence from './components/FifthGrade/SocialStudies/DeclarationOfIndependence';
+import CountriesQuiz from './components/FifthGrade/SocialStudies/CountriesQuiz';
 import LongDivision from './components/FifthGrade/Math/LongDivision';
 import MathProblemGenerator from './components/FifthGrade/Math/MathProblemGenerator';
 import FifthGradeMultiplicationTables from './components/FifthGrade/Math/MultiplicationTables';
@@ -34,6 +38,10 @@ import AnglesActivity from './components/ThirdGrade/Math/AnglesActivity';
 import TypingPractice from './components/ThirdGrade/Typing/TypingPractice';
 import StatesOfMatter from './components/ThirdGrade/Science/StatesOfMatter';
 import AnimalHabitats from './components/ThirdGrade/Science/AnimalHabitats';
+import ThirdGradeAmericanIndependence from './components/ThirdGrade/SocialStudies/AmericanIndependence';
+import ThirdGradeFourthOfJuly from './components/ThirdGrade/SocialStudies/FourthOfJuly';
+import ThirdGradeDeclarationOfIndependence from './components/ThirdGrade/SocialStudies/DeclarationOfIndependence';
+import ThirdGradeCountriesQuiz from './components/ThirdGrade/SocialStudies/CountriesQuiz';
 
 type CurrentView = 
   | 'home'
@@ -50,11 +58,13 @@ type CurrentView =
   | 'state-capitals'
   | 'american-history'
   | 'interactive-geography'
+  | 'american-independence'
+  | 'fourth-of-july'
+  | 'declaration-of-independence'
+  | 'countries-quiz'
   | 'long-division'
   | 'math-problem-generator'
   | 'fifth-grade-multiplication-tables'
-  | 'simple-machines'
-  | 'electricity-circuits'
   | 'text-retelling'
   | 'addition-subtraction'
   | 'analog-clock'
@@ -62,7 +72,9 @@ type CurrentView =
   | 'angles-activity'
   | 'typing-practice'
   | 'states-of-matter'
-  | 'animal-habitats';
+  | 'animal-habitats'
+  | 'simple-machines'
+  | 'electricity-circuits';
 
 function App() {
   const [currentStudent, setCurrentStudent] = useState<string | null>(null);
@@ -218,6 +230,34 @@ function App() {
               color="border-l-blue-500"
               onClick={() => setCurrentView('interactive-geography')}
             />
+            <ActivityCard
+              title="American Independence"
+              description="Learn about the Fourth of July, Declaration of Independence, and the American Revolution"
+              icon={Flag}
+              color="border-l-red-500"
+              onClick={() => setCurrentView('american-independence')}
+            />
+            <ActivityCard
+              title="Fourth of July Celebrations"
+              description="Discover what the Fourth of July represents and how Americans celebrate Independence Day"
+              icon={Flag}
+              color="border-l-blue-500"
+              onClick={() => setCurrentView('fourth-of-july')}
+            />
+            <ActivityCard
+              title="Declaration of Independence"
+              description="Explore America's founding document and understand what it means"
+              icon={BookOpen}
+              color="border-l-purple-500"
+              onClick={() => setCurrentView('declaration-of-independence')}
+            />
+            <ActivityCard
+              title="World Countries Quiz"
+              description="Test your knowledge of countries, capitals, flags, and fun facts from around the world"
+              icon={Globe}
+              color="border-l-indigo-500"
+              onClick={() => setCurrentView('countries-quiz')}
+            />
           </div>
         </div>
       );
@@ -316,7 +356,7 @@ function App() {
         />
         <SubjectCard
           title="Science"
-          description="Simple machines, levers, and physics experiments"
+          description="Simple machines, electricity, and physics experiments"
           icon={Zap}
           color="border-l-orange-500"
           onClick={() => setCurrentView('science')}
@@ -373,6 +413,34 @@ function App() {
               icon={BookOpen}
               color="border-l-amber-500"
               onClick={() => setCurrentView('american-history')}
+            />
+            <ActivityCard
+              title="American Independence"
+              description="Learn about the Fourth of July and why we celebrate Independence Day"
+              icon={Flag}
+              color="border-l-red-500"
+              onClick={() => setCurrentView('american-independence')}
+            />
+            <ActivityCard
+              title="Fourth of July Celebrations"
+              description="Learn about America's birthday and how we celebrate with fireworks, parades, and fun!"
+              icon={Flag}
+              color="border-l-blue-500"
+              onClick={() => setCurrentView('fourth-of-july')}
+            />
+            <ActivityCard
+              title="Declaration of Independence"
+              description="Learn about America's most important document and what it says"
+              icon={BookOpen}
+              color="border-l-purple-500"
+              onClick={() => setCurrentView('declaration-of-independence')}
+            />
+            <ActivityCard
+              title="World Countries Quiz"
+              description="Learn about countries, capitals, and flags from around the world"
+              icon={Globe}
+              color="border-l-indigo-500"
+              onClick={() => setCurrentView('countries-quiz')}
             />
           </div>
         </div>
@@ -533,6 +601,62 @@ function App() {
             onSaveProgress={createProgressHandler('social-studies', 'Interactive Geography')}
           />
         );
+      case 'american-independence':
+        return (
+          selectedGrade === '5th' ? (
+            <AmericanIndependence 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'American Independence')}
+            />
+          ) : (
+            <ThirdGradeAmericanIndependence 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'American Independence')}
+            />
+          )
+        );
+      case 'fourth-of-july':
+        return (
+          selectedGrade === '5th' ? (
+            <FourthOfJuly 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'Fourth of July Celebrations')}
+            />
+          ) : (
+            <ThirdGradeFourthOfJuly 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'Fourth of July Celebrations')}
+            />
+          )
+        );
+      case 'declaration-of-independence':
+        return (
+          selectedGrade === '5th' ? (
+            <DeclarationOfIndependence 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'Declaration of Independence')}
+            />
+          ) : (
+            <ThirdGradeDeclarationOfIndependence 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'Declaration of Independence')}
+            />
+          )
+        );
+      case 'countries-quiz':
+        return (
+          selectedGrade === '5th' ? (
+            <CountriesQuiz 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'World Countries Quiz')}
+            />
+          ) : (
+            <ThirdGradeCountriesQuiz 
+              onBack={() => setCurrentView('social-studies')} 
+              onSaveProgress={createProgressHandler('social-studies', 'World Countries Quiz')}
+            />
+          )
+        );
       case 'long-division':
         return (
           <LongDivision 
@@ -552,20 +676,6 @@ function App() {
           <FifthGradeMultiplicationTables 
             onBack={() => setCurrentView('math')} 
             onSaveProgress={createProgressHandler('math', 'Multiplication Tables')}
-          />
-        );
-      case 'simple-machines':
-        return (
-          <SimpleMachines 
-            onBack={() => setCurrentView('science')} 
-            onSaveProgress={createProgressHandler('science', 'Simple Machines & Levers')}
-          />
-        );
-      case 'electricity-circuits':
-        return (
-          <ElectricityCircuits 
-            onBack={() => setCurrentView('science')} 
-            onSaveProgress={createProgressHandler('science', 'Electricity & Circuits')}
           />
         );
       case 'text-retelling':
@@ -607,7 +717,7 @@ function App() {
         return (
           <TypingPractice 
             onBack={() => setCurrentView('home')} 
-            onSaveProgress={createProgressHandler('reading', 'Typing Practice')}
+            onSaveProgress={createProgressHandler('typing', 'Typing Practice')}
           />
         );
       case 'states-of-matter':
@@ -622,6 +732,19 @@ function App() {
           <AnimalHabitats 
             onBack={() => setCurrentView('science')} 
             onSaveProgress={createProgressHandler('science', 'Animal Habitats')}
+          />
+        );
+      case 'simple-machines':
+        return (
+          <SimpleMachines 
+            onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'Simple Machines & Levers')}
+          />
+        );
+      case 'electricity-circuits':
+        return (
+          <ElectricityCircuits 
+            onBack={() => setCurrentView('science')} 
           />
         );
       default:
