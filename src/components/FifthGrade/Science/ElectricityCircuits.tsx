@@ -3,6 +3,7 @@ import { ArrowLeft, Zap, Target, Settings, Lightbulb, Battery, Power, Circle, Mi
 
 interface ElectricityCircuitsProps {
   onBack: () => void;
+  onSaveProgress?: (score: number, total: number) => void;
 }
 
 type CompType = 'battery' | 'bulb' | 'switch';
@@ -52,7 +53,7 @@ function isCircuitComplete(components: SimComponent[]) {
   return false;
 }
 
-const ElectricityCircuits: React.FC<ElectricityCircuitsProps> = ({ onBack }) => {
+const ElectricityCircuits: React.FC<ElectricityCircuitsProps> = ({ onBack, onSaveProgress }) => {
   const [view, setView] = useState<'main' | 'explorer' | 'simulator' | 'experiments' | 'quiz'>('main');
   const [selectedCircuit, setSelectedCircuit] = useState<any>(null);
 
@@ -208,7 +209,15 @@ const ElectricityCircuits: React.FC<ElectricityCircuitsProps> = ({ onBack }) => 
             </ul>
             <button
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 mb-2"
-              onClick={() => setTestResult(isCircuitComplete(simComponents))}
+              onClick={() => {
+                const result = isCircuitComplete(simComponents);
+                setTestResult(result);
+                // Save progress when testing circuits
+                if (onSaveProgress && simComponents.length > 0) {
+                  const score = result ? 100 : Math.min(50, simComponents.length * 10);
+                  onSaveProgress(score, 100);
+                }
+              }}
             >Test Circuit</button>
             {testResult !== null && (
               <div className={`mt-4 p-3 rounded-lg text-center font-bold ${testResult ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

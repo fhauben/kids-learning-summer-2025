@@ -6,6 +6,7 @@ import { useProgress } from './hooks/useProgress';
 // Components
 import StudentLogin from './components/StudentLogin';
 import ProgressTracker from './components/ProgressTracker';
+import ProgressTest from './components/ProgressTest';
 import DailyChallenge from './components/DailyChallenge';
 import LearningPath from './components/LearningPath';
 import GradeSelector from './components/GradeSelector';
@@ -50,6 +51,7 @@ type CurrentView =
   | 'social-studies'
   | 'science'
   | 'progress'
+  | 'progress-test'
   | 'daily-challenges'
   | 'learning-paths'
   | 'fun-learning'
@@ -82,9 +84,15 @@ function App() {
   const [currentView, setCurrentView] = useState<CurrentView>('home');
   const { updateProgress } = useProgress();
 
+  // New login handler: set student and go to progress page
+  const handleStudentLogin = (studentName: string) => {
+    setCurrentStudent(studentName);
+    setCurrentView('progress');
+  };
+
   // If no student is logged in, show login page
   if (!currentStudent) {
-    return <StudentLogin onStudentLogin={setCurrentStudent} />;
+    return <StudentLogin onStudentLogin={handleStudentLogin} />;
   }
 
   // If viewing progress page
@@ -101,6 +109,25 @@ function App() {
             </button>
           </header>
           <ProgressTracker />
+        </div>
+      </div>
+    );
+  }
+
+  // If viewing progress test page
+  if (currentView === 'progress-test') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <header className="text-center mb-8">
+            <button
+              onClick={() => setCurrentView('home')}
+              className="text-blue-600 hover:text-blue-800 font-semibold mb-4 flex items-center"
+            >
+              ← Back to Learning
+            </button>
+          </header>
+          <ProgressTest />
         </div>
       </div>
     );
@@ -745,6 +772,7 @@ function App() {
         return (
           <ElectricityCircuits 
             onBack={() => setCurrentView('science')} 
+            onSaveProgress={createProgressHandler('science', 'Electricity & Circuits')}
           />
         );
       default:
@@ -781,6 +809,16 @@ function App() {
               <BarChart3 className="w-5 h-5 mr-2" />
               My Progress
             </button>
+
+            {/* Show Test Progress only for admin */}
+            {currentStudent && currentStudent.trim().toLowerCase() === 'admin' && (
+              <button
+                onClick={() => setCurrentView('progress-test')}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center"
+              >
+                🧪 Test Progress
+              </button>
+            )}
 
             <button
               onClick={() => setCurrentView('daily-challenges')}
